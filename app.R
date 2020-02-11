@@ -10,6 +10,7 @@ library(xts)
 library(stringr)
 library(raster)
 library(rgdal)
+library(rhandsontable)
 
 
 
@@ -26,24 +27,38 @@ if(machineName=='soils-discovery'){
 SenFedServer <- 'http://esoil.io/SensorFederationWebAPI/SensorAPI'
 
 soilDataDF <- read.csv(paste0(dataStoreDir, '/scans_predicted_soil_data.csv'), stringsAsFactors = F)
+soilLocs <- soilDataDF[row.names(unique(soilDataDF[,c("locID", "easting", "northing")])), c("locID", "easting", "northing")]
+coordinates(soilLocs) <- c("easting", "northing")
+proj4string(soilLocs) <- CRS('+proj=utm +zone=55 +south +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs')
+CRS.new <- CRS("+init=epsg:4326")
+spts <- spTransform(soilLocs, CRS.new)
 
 
 
 shiny::shinyApp(
   ui = f7Page(
     title = "Boowoora Ag Research Station",
+    init = f7Init(skin = "auto", theme = "light"),
+    #title = NULL,
+    preloader = T,
+    loading_duration = 4,
     f7TabLayout(
       panels = tagList(
         f7Panel(title = "Left Panel", side = "left", theme = "light", "Blabla", effect = "cover")
         #f7Panel(title = "Right Panel", side = "right", theme = "dark", "Blabla", effect = "cover")
       ),
+      
       navbar = f7Navbar(
-        title = "Boowoora Ag Research Station",
+        title = shiny::tags$div(tags$a(href = "shiny.rstudio.com/tutorial", "Click Here!"), tags$img(src = "Logos/csiro.png", width = "20px", height = "20px"), "Boowoora Ag Research Station "),
         hairline = T,
         shadow = T,
-        left_panel = TRUE,
+        left_panel = T,
         right_panel = F
       ),
+      
+     
+      
+     
       f7Tabs(
         animated = T,
         #swipeable = TRUE,
@@ -55,7 +70,7 @@ shiny::shinyApp(
             intensity = 10,
             hover = TRUE,
             f7Card(
-              title = "",
+              title = NULL,
               #sliderInput("obs1", "Number of observations", 0, 1000, 500),
               f7Select('SMDepth', "Select Soil Moisture Depth (cm)", c(30, 40, 50,60,70,80,90,100)),
               leafletOutput("moistureMap", height = 400)
@@ -112,14 +127,18 @@ shiny::shinyApp(
             intensity = 10,
             hover = TRUE,
             f7Card(
-              title = "Soil Data",
-              
-              f7Select('SoilPropList', "Select soil attribute", choices=c('clay', 'ecec', 'phc', 'soc')),
+              title = NULL,
+              fluidRow( f7Select('SoilPropList', "Select soil attribute", choices=c('clay', 'ecec', 'phc', 'soc')),  f7Select('SoilDepthList', "Select depth (cm)", choices=c('d1', 'd2', 'd3', 'd4'))),
+              #f7Select('SoilPropList', "Select soil attribute", choices=c('clay', 'ecec', 'phc', 'soc')),
               HTML('<BR>'),
-              leafletOutput("soilMap", height = 400)
+              leafletOutput("soilMap", height = 400),
+              HTML('<BR>'),
+              rHandsontableOutput('soilDataTable' )
+              #tableOutput('soilDataTable' )
             )
           )
         )
+       
       )
     )
   ),
@@ -129,6 +148,7 @@ shiny::shinyApp(
     RV$currentTS <- NULL
     RV$currentSite <- NULL
     RV$sensorLocs <- NULL
+    RV$currentSoil <- NULL
 
     ################  Get data from Clicking on a sensor  #################
     observe({
@@ -227,7 +247,17 @@ shiny::shinyApp(
 
     
     output$soilMap <- renderLeaflet({
-      leaflet() %>%
+      
+      sdf <- RV$sensorLocs
+      labs <- lapply(seq(nrow(sdf)), function(i) {
+        paste0( '<li>Site Name : ', sdf[i, "SiteName"], '</li>',
+                '<li>Provider : ', sdf[i, "SensorGroup"], '</li>',
+                '<li>Backend : ', sdf[i, "Backend"], '</li>',
+                #'<li>Access : ', sdf[i, "Access"], '</li>',
+                '<li>Site ID : ', sdf[i, "SiteID"], '</li>')
+      })
+      
+      leaflet(options = leafletOptions(zoomControl = FALSE)) %>%
         clearMarkers() %>%
         addTiles(group = "Map") %>%
         addProviderTiles("Esri.WorldImagery", options = providerTileOptions(noWrap = TRUE), group = "Satelite Image") %>%
@@ -241,39 +271,79 @@ shiny::shinyApp(
     })
     
     observe({
-      req(input$SoilPropList)
-
       
-      sdf <- unique( soilDataDF$locID, soilDataDF$easting, soilDataDF$northing)
-      labs <- lapply(seq(nrow(sdf)), function(i) {
-        paste0( '<li>Site Name : ', sdf[i, "SiteName"], '</li>',
-                '<li>Provider : ', sdf[i, "SensorGroup"], '</li>',
-                '<li>Backend : ', sdf[i, "Backend"], '</li>',
-                #'<li>Access : ', sdf[i, "Access"], '</li>',
-                '<li>Site ID : ', sdf[i, "SiteID"], '</li>')
+      sdf <- soilLocs
+      labs <- lapply(seq(nrow(sdf@data)), function(i) {
+        paste0( '<li>Site Name : ', sdf@data[i, "locID"], '</li>')
+                
       })
      
-      rPath <- paste0(dataStoreDir, '/', input$SoilPropList, '/', input$SoilPropList, '_d1_50th_percentile.tif' )
-      
+      rPath <- paste0(dataStoreDir, '/SoilPropertyPredictions/', input$SoilPropList, '/', input$SoilPropList, '_d1_50th_percentile.tif' )
+      print(rPath)
       r <- raster(rPath)
       crs(r) <- CRS('+proj=utm +zone=55 +south +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs')
       pal <- colorNumeric(c("brown", "lightgreen",  "darkgreen"), values(r),na.color = "transparent")
      
-      proxy <- leafletProxy("soilMap", data = RV$sensorLocs)
+      
+      print(head(sdf))
+      proxy <- leafletProxy("soilMap", data = spts)
       proxy %>% clearMarkers()
       proxy %>% clearControls()
       proxy %>% addRasterImage(r, colors = pal, opacity = 0.8 ,  group = "Soil Maps")
       proxy %>% leaflet::addLegend(pal = pal, values = values(r), title = input$SoilPropList)
-      # proxy %>% addCircleMarkers(   lng = ~Longitude, lat = ~Latitude,
-      #                               label = lapply(labs, HTML),
-      #                               stroke = FALSE,
-      #                               fillOpacity = 1,
-      #                              # color = factpal(sdf[,input$SensorLabel]),
-      #                               radius = 10,
-      #                               layerId=paste0(sdf$SiteID),
-      #                               group = "Sensors" )
+      proxy %>% addCircleMarkers(  # lng = ~easting, lat = ~northing,
+                                     label = lapply(labs, HTML),
+                                    stroke = FALSE,
+                                    fillOpacity = 1,
+                                    color = 'red',
+                                    radius = 8,
+                                    layerId=paste0(sdf$locID),
+                                    group = "Soil Observations" )
     })
     
+    ################  Get data from Clicking on a sensor  #################
+    observe({
+      click <-input$soilMap_marker_click
+      if(is.null(click))
+        return()
+      
+      sid <- click$id
+      RV$currentSoil <- soilDataDF[soilDataDF$locID == sid, c(3, 6,7, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20) ]
+      print(RV$currentSoil)
+    })
+    
+    acm_defaults <- function(map, x, y) addCircleMarkers(map, x, y, radius=8, color="black", fillColor="orange", fillOpacity=1, opacity=1, weight=2, stroke=TRUE, layerId="Selected")
+    
+    observeEvent(input$soilMap_marker_click, { # update the map markers and view on location selectInput changes
+      
+      p <- input$soilMap_marker_click
+      if(is.null(p))
+        return()
+      
+      
+      proxy <- leafletProxy("soilMap")
+      
+      if(p$id=="Selected"){
+        proxy %>% removeMarker(layerId="Selected")
+      } else {
+        #proxy %>% setView(lng=p$lng, lat=p$lat, input$Map_zoom) %>% acm_defaults(p$lng, p$lat)
+        proxy %>% acm_defaults(p$lng, p$lat)
+      }
+    })
+    
+    output$soilDataTable = renderRHandsontable({
+      req(RV$currentSoil)
+      if(nrow(RV$currentSoil) > 0){
+        rhandsontable(RV$currentSoil,   manualColumnResize = T, readOnly = TRUE, rowHeaders = F)%>%
+          hot_table(highlightCol = F, highlightRow = F)
+      }else{
+        return(NULL)
+      }
+    })
 
+    # output$soilDataTable <- renderTable({
+    #   RV$currentSoil
+    # }, rownames = F)
+    
   }
 )
