@@ -114,7 +114,7 @@ shiny::shinyApp(
             f7Card(
               title = "Soil Data",
               
-              f7Select('SoilPropList', "Select soil attribute", choices=c('clay', 'ecec', 'phc', 'soc')),
+              fluidRow( f7Select('SoilPropList', "Select soil attribute", choices=c('clay', 'ecec', 'phc', 'soc')),  f7Select('SoilDepthList', "Select depth (cm)", choices=c('d1', 'd2', 'd3', 'd4'))),
               HTML('<BR>'),
               leafletOutput("soilMap", height = 400)
             )
@@ -253,7 +253,7 @@ shiny::shinyApp(
                 '<li>Site ID : ', sdf[i, "SiteID"], '</li>')
       })
      
-      rPath <- paste0(dataStoreDir, '/', input$SoilPropList, '/', input$SoilPropList, '_d1_50th_percentile.tif' )
+      rPath <- paste0(dataStoreDir, '/', input$SoilPropList, '/', input$SoilPropList, '_', input$SoilDepthList, '_50th_percentile.tif' )
       
       r <- raster(rPath)
       crs(r) <- CRS('+proj=utm +zone=55 +south +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs')
