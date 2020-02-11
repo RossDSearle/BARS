@@ -11,11 +11,19 @@ library(stringr)
 library(raster)
 
 
-source('appUtils.R')
 
+
+machineName <- as.character(Sys.info()['nodename'])
+if(machineName=='soils-discovery'){
+  dataStoreDir <- '/mnt/data/BARS'
+  source('/srv/shiny-server/BARS/appUtils.R')
+}else{
+  dataStoreDir <- 'C:/Temp/boorowa_2019/data/processed'
+  source('appUtils.R')
+}
 
 SenFedServer <- 'http://esoil.io/SensorFederationWebAPI/SensorAPI'
-dataStoreDir <- 'C:/Temp/boorowa_2019/data'
+
 
 
 
@@ -47,13 +55,13 @@ shiny::shinyApp(
             f7Card(
               title = "",
               #sliderInput("obs1", "Number of observations", 0, 1000, 500),
-              f7Select('SMDepth', "Select Soil Moisture Depth", c(30, 40, 50,60,70,80,90,100)),
-              leafletOutput("moistureMap", height = 500)
+              f7Select('SMDepth', "Select Soil Moisture Depth (cm)", c(30, 40, 50,60,70,80,90,100)),
+              leafletOutput("moistureMap", height = 400)
               # footer = tagList(
               #   #f7Button(color = "blue", label = "My button", src = "https://www.google.com"),
               #   f7Badge("Badge", color = "green")
               # )
-            ),
+            )
 
           ), f7Shadow(
             intensity = 100,
@@ -62,7 +70,7 @@ shiny::shinyApp(
               title = "Hi there",
               dygraphOutput("mositureChart1", width = "350", height = "300px")
 
-            ),
+            )
 
           )
         ),
@@ -103,18 +111,10 @@ shiny::shinyApp(
             hover = TRUE,
             f7Card(
               title = "Soil Data",
-              prettyCheckboxGroup(
-                "variable",
-                "Variables to show:",
-                c("Cylinders" = "cyl",
-                  "Transmission" = "am",
-                  "Gears" = "gear"),
-                inline = TRUE,
-                status = "danger",
-                animation = "pulse"
-              ),
-              f7Picker('SoilPropList', "Select soil attribute", choices=c('clay', 'ecec', 'phc', 'soc')),
-              leafletOutput("soilMap", height = 500)
+              
+              f7Select('SoilPropList', "Select soil attribute", choices=c('clay', 'ecec', 'phc', 'soc')),
+              HTML('<BR>'),
+              leafletOutput("soilMap", height = 400)
             )
           )
         )
@@ -250,8 +250,10 @@ shiny::shinyApp(
                 '<li>Site ID : ', sdf[i, "SiteID"], '</li>')
       })
      
-      r <- raster(paste0(dataStoreDir, '/processed/clay/clay_d1_50th_percentile.tif' ))
-      crs(r) <- CRS('+init=EPSG:28355')
+      r <- raster(paste0(dataStoreDir, '/clay/clay_d1_50th_percentile.tif' ))
+     
+      crs(r) <- CRS('+proj=utm +zone=55 +south +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs')
+      #crs(r) <- CRS('+init=EPSG:28355')
       pal <- colorNumeric(c("brown", "lightgreen",  "darkgreen"), values(r),na.color = "transparent")
       # colCnt <- length(unique(sdf[,input$SensorLabel]))
       # colCats <- unique(sdf[,input$SensorLabel])
