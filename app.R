@@ -37,7 +37,7 @@ spts <- spTransform(soilLocs, CRS.new)
 
 shiny::shinyApp(
   ui = f7Page(
-    title = "Boowoora Ag Research Station",
+    title = "Boowora Ag Research Station",
     init = f7Init(skin = "auto", theme = "light"),
     #title = NULL,
     preloader = T,
@@ -49,7 +49,9 @@ shiny::shinyApp(
       ),
       
       navbar = f7Navbar(
-        title = shiny::tags$div(tags$img(src = "Logos/csiro.png", width = "20px", height = "20px"), "Boowoora Ag Research Station "),
+        #title = shiny::tags$div(style="background-image: url('Logos/HdrBkGrdImage.PNG');", tags$img(src = "Logos/csiro.png", width = "40px", height = "40px"), "Boowora Agricultutral Research Station "),
+        title = shiny::tags$div( tags$img(src = "Logos/csiro.png", width = "40px", height = "40px"), "Boowora Agricultutral Research Station "),
+        
         hairline = T,
         shadow = T,
         left_panel = T,
