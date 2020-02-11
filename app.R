@@ -9,6 +9,7 @@ library(jsonlite)
 library(xts)
 library(stringr)
 library(raster)
+library(rgdal)
 
 
 
@@ -24,6 +25,7 @@ if(machineName=='soils-discovery'){
 
 SenFedServer <- 'http://esoil.io/SensorFederationWebAPI/SensorAPI'
 
+soilDataDF <- read.csv(paste0(dataStoreDir, '/scans_predicted_soil_data.csv'), stringsAsFactors = F)
 
 
 
@@ -179,7 +181,7 @@ shiny::shinyApp(
 
 
     observe({
-      req(RV$sensorLocs)
+      req(input$SoilPropList)
       sdf <- RV$sensorLocs
       labs <- lapply(seq(nrow(sdf)), function(i) {
         paste0( '<li>Site Name : ', sdf[i, "SiteName"], '</li>',
@@ -231,17 +233,18 @@ shiny::shinyApp(
         addProviderTiles("Esri.WorldImagery", options = providerTileOptions(noWrap = TRUE), group = "Satelite Image") %>%
         setView(lng = 148.689633, lat = -34.468953, zoom = 14) %>%
         
-        # addControlGPS() %>%
-        
         addLayersControl(
           baseGroups = c("Satelite Image", "Map"),
           overlayGroups = c("Soil Maps", "Soil Observations"),
           options = layersControlOptions(collapsed = T)
         )
     })
+    
     observe({
-      req(RV$sensorLocs)
-      sdf <- RV$sensorLocs
+      req(input$SoilPropList)
+
+      
+      sdf <- unique( soilDataDF$locID, soilDataDF$easting, soilDataDF$northing)
       labs <- lapply(seq(nrow(sdf)), function(i) {
         paste0( '<li>Site Name : ', sdf[i, "SiteName"], '</li>',
                 '<li>Provider : ', sdf[i, "SensorGroup"], '</li>',
@@ -250,29 +253,25 @@ shiny::shinyApp(
                 '<li>Site ID : ', sdf[i, "SiteID"], '</li>')
       })
      
-      r <- raster(paste0(dataStoreDir, '/clay/clay_d1_50th_percentile.tif' ))
-     
+      rPath <- paste0(dataStoreDir, '/', input$SoilPropList, '/', input$SoilPropList, '_d1_50th_percentile.tif' )
+      
+      r <- raster(rPath)
       crs(r) <- CRS('+proj=utm +zone=55 +south +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs')
-      #crs(r) <- CRS('+init=EPSG:28355')
       pal <- colorNumeric(c("brown", "lightgreen",  "darkgreen"), values(r),na.color = "transparent")
-      # colCnt <- length(unique(sdf[,input$SensorLabel]))
-      # colCats <- unique(sdf[,input$SensorLabel])
-      # colField <- sdf[,input$SensorLabel]
-      # factpal <-colorFactor(RColorBrewer::brewer.pal(colCnt, 'Spectral'), colField)
-      # 
+     
       proxy <- leafletProxy("soilMap", data = RV$sensorLocs)
       proxy %>% clearMarkers()
       proxy %>% clearControls()
-      #addRasterImage(r, colors = pal, opacity = 0.8 ,  group = "Soil Maps")
       proxy %>% addRasterImage(r, colors = pal, opacity = 0.8 ,  group = "Soil Maps")
-      proxy %>% addCircleMarkers(   lng = ~Longitude, lat = ~Latitude,
-                                    label = lapply(labs, HTML),
-                                    stroke = FALSE,
-                                    fillOpacity = 1,
-                                   # color = factpal(sdf[,input$SensorLabel]),
-                                    radius = 10,
-                                    layerId=paste0(sdf$SiteID),
-                                    group = "Sensors" )
+      proxy %>% leaflet::addLegend(pal = pal, values = values(r), title = input$SoilPropList)
+      # proxy %>% addCircleMarkers(   lng = ~Longitude, lat = ~Latitude,
+      #                               label = lapply(labs, HTML),
+      #                               stroke = FALSE,
+      #                               fillOpacity = 1,
+      #                              # color = factpal(sdf[,input$SensorLabel]),
+      #                               radius = 10,
+      #                               layerId=paste0(sdf$SiteID),
+      #                               group = "Sensors" )
     })
     
 
