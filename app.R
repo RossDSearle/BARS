@@ -127,13 +127,13 @@ shiny::shinyApp(
             intensity = 10,
             hover = TRUE,
             f7Card(
+
               title = NULL,
               fluidRow( f7Select('SoilPropList', "Select soil attribute", choices=c('clay', 'ecec', 'phc', 'soc')),  f7Select('SoilDepthList', "Select depth (cm)", choices=c('d1', 'd2', 'd3', 'd4'))),
               #f7Select('SoilPropList', "Select soil attribute", choices=c('clay', 'ecec', 'phc', 'soc')),
               HTML('<BR>'),
               leafletOutput("soilMap", height = 400),
-              HTML('<BR>'),
-              rHandsontableOutput('soilDataTable' )
+             rHandsontableOutput('soilDataTable' )
               #tableOutput('soilDataTable' )
             )
           )
@@ -278,8 +278,9 @@ shiny::shinyApp(
                 
       })
      
-      rPath <- paste0(dataStoreDir, '/SoilPropertyPredictions/', input$SoilPropList, '/', input$SoilPropList, '_d1_50th_percentile.tif' )
-      print(rPath)
+
+      rPath <- paste0(dataStoreDir, '/', input$SoilPropList, '/', input$SoilPropList, '_', input$SoilDepthList, '_50th_percentile.tif' )
+      
       r <- raster(rPath)
       crs(r) <- CRS('+proj=utm +zone=55 +south +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs')
       pal <- colorNumeric(c("brown", "lightgreen",  "darkgreen"), values(r),na.color = "transparent")
