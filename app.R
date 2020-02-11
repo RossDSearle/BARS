@@ -17,7 +17,7 @@ library(rhandsontable)
 
 machineName <- as.character(Sys.info()['nodename'])
 if(machineName=='soils-discovery'){
-  dataStoreDir <- '/mnt/data/BARS'
+  dataStoreDir <- '/mnt/data/BARS/SoilPropertyPredictions'
   source('/srv/shiny-server/BARS/appUtils.R')
 }else{
   dataStoreDir <- 'C:/Temp/boorowa_2019/data/processed'
@@ -49,7 +49,7 @@ shiny::shinyApp(
       ),
       
       navbar = f7Navbar(
-        title = shiny::tags$div(tags$a(href = "shiny.rstudio.com/tutorial", "Click Here!"), tags$img(src = "Logos/csiro.png", width = "20px", height = "20px"), "Boowoora Ag Research Station "),
+        title = shiny::tags$div(tags$img(src = "Logos/csiro.png", width = "20px", height = "20px"), "Boowoora Ag Research Station "),
         hairline = T,
         shadow = T,
         left_panel = T,
@@ -272,6 +272,7 @@ shiny::shinyApp(
     
     observe({
       
+      req(input$SoilPropList,input$SoilDepthList)
       sdf <- soilLocs
       labs <- lapply(seq(nrow(sdf@data)), function(i) {
         paste0( '<li>Site Name : ', sdf@data[i, "locID"], '</li>')
@@ -280,7 +281,7 @@ shiny::shinyApp(
      
 
       rPath <- paste0(dataStoreDir, '/', input$SoilPropList, '/', input$SoilPropList, '_', input$SoilDepthList, '_50th_percentile.tif' )
-      
+      print(rPath)
       r <- raster(rPath)
       crs(r) <- CRS('+proj=utm +zone=55 +south +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs')
       pal <- colorNumeric(c("brown", "lightgreen",  "darkgreen"), values(r),na.color = "transparent")
