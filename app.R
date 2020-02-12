@@ -13,7 +13,7 @@ library(rgdal)
 library(rhandsontable)
 
 
-
+defWidth = '380px'
 
 machineName <- as.character(Sys.info()['nodename'])
 if(machineName=='soils-discovery'){
@@ -75,12 +75,12 @@ shiny::shinyApp(
           f7Float( f7Shadow(
             intensity = 10,
             hover = TRUE,
-            div( style="width: 400px",
+            div( style=paste0("width: ", defWidth),
               f7Card(
               title = NULL,
               #sliderInput("obs1", "Number of observations", 0, 1000, 500),
               f7Select('SMDepth', "Select Soil Moisture Depth (cm)", c(30, 40, 50,60,70,80,90,100)),
-              leafletOutput("moistureMap", height = 400)
+              leafletOutput("moistureMap", height = 400 )
               # footer = tagList(
               #   #f7Button(color = "blue", label = "My button", src = "https://www.google.com"),
               #   f7Badge("Badge", color = "green")
@@ -92,7 +92,7 @@ shiny::shinyApp(
           , f7Float(  f7Shadow(
             intensity = 100,
             hover = TRUE,
-            div( style="width: 400px",
+            div( style=paste0("width: ", defWidth),
             f7Card(
               title = "Hi there",
               dygraphOutput("mositureChart1", width = "350", height = "300px")
