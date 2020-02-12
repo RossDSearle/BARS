@@ -38,7 +38,11 @@ spts <- spTransform(soilLocs, CRS.new)
 shiny::shinyApp(
   ui = f7Page(
     title = "BARS",
-    init = f7Init(skin = "auto", theme = "light"),
+    init = f7Init(skin = "auto", theme = "light", filled = T, color = 'lightblue',
+    ),
+    
+    
+    
     #title = NULL,
     preloader = T,
     loading_duration = 4,
@@ -68,10 +72,11 @@ shiny::shinyApp(
           tabName = "Soil Moisture",
           icon = f7Icon("layers_fill"),
           active = TRUE,
-          f7Shadow(
+          f7Float( f7Shadow(
             intensity = 10,
             hover = TRUE,
-            f7Card(
+            div( style="width: 400px",
+              f7Card(
               title = NULL,
               #sliderInput("obs1", "Number of observations", 0, 1000, 500),
               f7Select('SMDepth', "Select Soil Moisture Depth (cm)", c(30, 40, 50,60,70,80,90,100)),
@@ -81,17 +86,20 @@ shiny::shinyApp(
               #   f7Badge("Badge", color = "green")
               # )
             )
-
-          ), f7Shadow(
+            )
+          ), side = "left" )
+          
+          , f7Float(  f7Shadow(
             intensity = 100,
             hover = TRUE,
+            div( style="width: 400px",
             f7Card(
               title = "Hi there",
               dygraphOutput("mositureChart1", width = "350", height = "300px")
 
             )
-
-          )
+        )
+          ), side = "left" )
         ),
         f7Tab(
           tabName = "Weather",
