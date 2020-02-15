@@ -38,8 +38,6 @@ spts <- spTransform(soilLocs, CRS.new)
 shiny::shinyApp(
   ui = f7Page(
     title = "BARS",
-    init = f7Init(skin = "auto", theme = "light", filled = T, color = 'lightblue',
-    ),
     init = f7Init(skin = "auto", theme = "light", filled = T, color = 'lightblue', pullToRefresh = TRUE ),
     
     
