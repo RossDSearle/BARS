@@ -12,16 +12,24 @@ library(raster)
 library(rgdal)
 library(rhandsontable)
 
+library(shinyjs)
+library(shinyalert)
+library(shinyBS)
+library(fields)
 
 defWidth = '380px'
+loaderTime = 1
 
 machineName <- as.character(Sys.info()['nodename'])
 if(machineName=='soils-discovery'){
+  rootDir <- '/mnt/data/BARS'
   dataStoreDir <- '/mnt/data/BARS/SoilPropertyPredictions'
-  source('/srv/shiny-server/BARS/appUtils.R')
+  source(paste0( rootDir, '/appUtils.R'))
+  
 }else{
+  rootDir <- 'C:/Users/sea084/Dropbox/RossRCode/Git/Shiny/BARS'
   dataStoreDir <- 'C:/Temp/boorowa_2019/data/processed'
-  source('appUtils.R')
+  source(paste0( rootDir, '/appUtils.R'))
 }
 
 SenFedServer <- 'http://esoil.io/SensorFederationWebAPI/SensorAPI'
@@ -33,6 +41,9 @@ proj4string(soilLocs) <- CRS('+proj=utm +zone=55 +south +ellps=GRS80 +towgs84=0,
 CRS.new <- CRS("+init=epsg:4326")
 spts <- spTransform(soilLocs, CRS.new)
 
+today <- paste0(Sys.Date(), 'T00:00:00')
+
+bdy <- readOGR(paste0( rootDir, '/Data/CoarseBound.shp'))
 
 
 shiny::shinyApp(
@@ -41,11 +52,11 @@ shiny::shinyApp(
     init = f7Init(skin = "auto", theme = "light", filled = T, color = 'lightblue',
     ),
     
-    
+    useShinyjs(),
     
     #title = NULL,
     preloader = T,
-    loading_duration = 4,
+    loading_duration = loaderTime,
     f7TabLayout(
       panels = tagList(
         f7Panel(title = "Left Panel", side = "left", theme = "light", "Blabla", effect = "cover")
@@ -55,7 +66,6 @@ shiny::shinyApp(
       navbar = f7Navbar(
         #title = shiny::tags$div(style="background-image: url('Logos/HdrBkGrdImage.PNG');", tags$img(src = "Logos/csiro.png", width = "40px", height = "40px"), "Boowora Agricultutral Research Station "),
         title = shiny::tags$div( "Boowora Ag Research Station ",  tags$img(src = "Logos/csiro.png", width = "40px", height = "40px")),
-        
         hairline = T,
         shadow = T,
         left_panel = T,
@@ -69,7 +79,7 @@ shiny::shinyApp(
         animated = T,
         #swipeable = TRUE,
         f7Tab(
-          tabName = "Soil Moisture",
+          tabName = "SM Probes",
           icon = f7Icon("layers_fill"),
           active = TRUE,
           f7Float( f7Shadow(
@@ -78,8 +88,11 @@ shiny::shinyApp(
             div( style=paste0("width: ", defWidth),
               f7Card(
               title = NULL,
-              #sliderInput("obs1", "Number of observations", 0, 1000, 500),
+              #sliderInput("obs1", "Number of observations", 0, 1000, 500)
+              
+              
               f7Select('SMDepth', "Select Soil Moisture Depth (cm)", c(30, 40, 50,60,70,80,90,100)),
+              HTML('<BR>'),
               leafletOutput("moistureMap", height = 400 )
               # footer = tagList(
               #   #f7Button(color = "blue", label = "My button", src = "https://www.google.com"),
@@ -94,12 +107,40 @@ shiny::shinyApp(
             hover = TRUE,
             div( style=paste0("width: ", defWidth),
             f7Card(
-              title = "Hi there",
+              title = NULL,
+              
               dygraphOutput("mositureChart1", width = "350", height = "300px")
 
             )
         )
           ), side = "left" )
+        ),
+        
+        f7Tab(
+          tabName = "SM Maps",
+          icon = f7Icon("map"),
+          active = FALSE,
+          f7Shadow(
+            intensity = 10,
+            hover = TRUE,
+           div( style=paste0("width: ", defWidth),
+            f7Card(
+              title = NULL,
+              f7DatePicker( "SMmapDate", label='Select Map Date', value = NULL, min = NULL, max = NULL, format = "yyyy-mm-dd" ),
+             
+              HTML('<BR>'),
+              div( style=paste0("width: 100px"),
+              f7Button(inputId = 'drawSMmapbtn', label = "Draw Map", src = NULL, color = 'green', fill = TRUE, outline = F, shadow = T, rounded = T, size = NULL),
+              ),
+              HTML('<BR>'),
+              f7Progress(id = "pg1", value = 0, color = "blue"),
+            
+              
+              leafletOutput("moistureMap2", height = 400 )
+              
+            )
+            )
+          )
         ),
         f7Tab(
           tabName = "Weather",
@@ -152,14 +193,114 @@ shiny::shinyApp(
       )
     )
   ),
-  server = function(input, output) {
+  server = function(input, output, session) {
 
     RV <- reactiveValues()
     RV$currentTS <- NULL
     RV$currentSite <- NULL
     RV$sensorLocs <- NULL
     RV$currentSoil <- NULL
+    RV$SoilMOistureSensors <- NULL
 
+    
+    output$moistureMap2 <- renderLeaflet({
+      
+      
+      
+      leaflet() %>%
+        clearMarkers() %>%
+        addTiles(group = "Map") %>%
+        addProviderTiles("Esri.WorldImagery", options = providerTileOptions(noWrap = TRUE), group = "Satelite Image") %>%
+       
+        setView(lng = 148.689633, lat = -34.483, zoom = 13) %>%
+        
+        # addControlGPS() %>%
+        
+        addLayersControl(
+          baseGroups = c("Satelite Image", "Map"),
+          overlayGroups = c("Moisture Maps"),
+          options = layersControlOptions(collapsed = T)
+        )
+    })
+    
+   ###################   Draw the soil moisture maps   ##########
+     
+    observeEvent(input$drawSMmapbtn, {
+    #observe({
+      
+      req(input$drawSMmapbtn)
+      
+      
+      # req( RV$sensorLocs)
+      # bs <- RV$sensorLocs
+      # outDf <- data.frame()
+      # 
+      # itl <- 100/nrow(bs)
+      # 
+      # depth <- '1'
+      # DataType <- 'Soil-Moisture'
+      # day <- '2020-01-10T00%3A00%3A00'
+      # 
+      # for(i in 1:nrow(bs)){
+      #   print(i)
+      #   
+      #   itl <- round((100/(nrow(bs) ) * i))
+      #   updateF7Progress(session, id = "pg1", value = itl)
+      #   
+      #   sid <- bs$SiteID[i]
+      #   d1 <- as.Date(day)
+      #   d2 <- d1-10
+      #   d3 <- paste0(d2, 'T00:00:00')
+      #   
+      #   sens <- RV$SoilMOistureSensors[ RV$SoilMOistureSensors$SiteID == sid, ]
+      #   sens1 <- sens[grepl(paste0('_', depth, '_'), sens$SensorID), ]
+      #   sens2 <- sens1[grepl(paste0('_dielectric_constant'), sens1$SensorID), ]
+      #   
+      #   url <- paste0('http://esoil.io/SensorFederationWebAPI/SensorAPI/getSensorDataStreams?siteid=', sid, '&sensortype=Soil-Moisture&sensorid=', sens2$SensorID, '&startdate=', d3)
+      #   
+      #   response <- GET(url)
+      #   stream <- content(response, as="text", encoding	='UTF-8')
+      #   ts <- convertJSONtoTS(stream)
+      #   rec <- tail(ts, 1)
+      #   index(rec)[1]
+      #   df <- data.frame(SiteID=sid, dt= index(rec)[1], y=bs$Latitude[i], x=bs$Longitude[i], SM=rec[1,1])
+      #   colnames(df) <- c('sid', 'dt', 'y', 'x', 'SM') 
+      #   outDf <- rbind(outDf,df)
+      #   
+      # }
+      # 
+      # ext <- extent(bdy)
+      # r <- raster(ext, nrows=100, ncols=100)
+      # 
+      # print(df)
+      # 
+      # xy <- data.frame(x=outDf$x, y=outDf$y)
+      # tps <- Tps(xy, outDf$SM, lon.lat = T, lambda=0.01)
+      # p <- interpolate(r, tps)
+      # p <- mask(p, bdy)
+      
+      
+      p<-raster('c:/temp/r.tif')
+      #crs(p) <- CRS("+proj=longlat +datum=WGS84")
+      
+      crs(p) <- CRS("+init=epsg:4326")
+      #writeRaster(p, 'c:/temp/r.tif')
+      
+      pal <- colorNumeric(c("brown", "lightgreen",  "darkgreen"), values(p),na.color = "transparent")
+      
+      print(pal)
+      
+      #print(head(sdf))
+      proxysm <- leafletProxy("moistureMap2")
+      #proxy %>% clearMarkers()
+     # proxy %>% clearControls()
+     
+      proxysm %>% addRasterImage(p, colors = pal, opacity = 0.8 ,  group = "Soil Maps")
+      proxysm %>% leaflet::addLegend(pal = pal, values = values(p), title = 'Soil Moisture', position = "bottomleft" )
+      
+    } , ignoreInit = TRUE   )
+    
+    
     ################  Get data from Clicking on a sensor  #################
     observe({
       click<-input$moistureMap_marker_click
@@ -200,7 +341,10 @@ shiny::shinyApp(
       }
     })
 
-    observe({
+   
+    ########  Get sensor locations   ##############
+    
+     observe({
       url <- paste0(SenFedServer,"/getSensorLocations?sensortype=Soil-Moisture" )
       response <- GET(url)
       stop_for_status(response) # stop if the response is an error
@@ -209,6 +353,18 @@ shiny::shinyApp(
       RV$sensorLocs <- bs
     })
 
+    ########  Get Boowora Sensor Info   ##############
+    
+    observe({
+      url <- paste0(SenFedServer,'/getSensorInfo?sensortype=Soil-Moisture')
+      response <- GET(url)
+      stop_for_status(response) # stop if the response is an error
+      sensors3 <- fromJSON(content(response, as="text"))
+      
+      sensors  <- sensors3[sensors3$SensorGroup == 'Booroowa',]
+      RV$SoilMOistureSensors <- sensors
+    })
+    
 
     observe({
       req(input$SoilPropList)
