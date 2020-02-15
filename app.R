@@ -40,6 +40,7 @@ shiny::shinyApp(
     title = "BARS",
     init = f7Init(skin = "auto", theme = "light", filled = T, color = 'lightblue',
     ),
+    init = f7Init(skin = "auto", theme = "light", filled = T, color = 'lightblue', pullToRefresh = TRUE ),
     
     
     
