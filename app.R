@@ -49,7 +49,7 @@ bdy <- readOGR(paste0( rootDir, '/Data/CoarseBound.shp'))
 shiny::shinyApp(
   ui = f7Page(
     title = "BARS",
-    init = f7Init(skin = "auto", theme = "light", filled = T, color = 'lightblue', pullToRefresh = TRUE ),
+    init = f7Init(skin = "auto", theme = "light", filled = T, color = 'lightblue' ),
     
     useShinyjs(),
     
@@ -84,7 +84,7 @@ shiny::shinyApp(
           f7Float( f7Shadow(
             intensity = 10,
             hover = TRUE,
-            div( style=paste0("width: ", defWidth),
+           tags$div( style=paste0("width: ", defWidth),
               f7Card(
               title = NULL,
               #sliderInput("obs1", "Number of observations", 0, 1000, 500)
@@ -104,7 +104,7 @@ shiny::shinyApp(
           , f7Float(  f7Shadow(
             intensity = 100,
             hover = TRUE,
-            div( style=paste0("width: ", defWidth),
+            tags$div( style=paste0("width: ", defWidth),
             f7Card(
               title = NULL,
               
@@ -128,9 +128,9 @@ shiny::shinyApp(
               f7DatePicker( "SMmapDate", label='Select Map Date', value = NULL, min = NULL, max = NULL, format = "yyyy-mm-dd" ),
              
               HTML('<BR>'),
-              div( style=paste0("width: 100px"),
-              f7Button(inputId = 'drawSMmapbtn', label = "Draw Map", src = NULL, color = 'green', fill = TRUE, outline = F, shadow = T, rounded = T, size = NULL),
-              ),
+               #div( style=paste0("width: 100px"),
+               f7Button(inputId = 'drawSMmapbtn', label = "Draw Map", src = NULL, color = 'green', fill = TRUE, outline = F, shadow = T, rounded = T, size = NULL),
+               #),
               HTML('<BR>'),
               f7Progress(id = "pg1", value = 0, color = "blue"),
             
