@@ -22,7 +22,7 @@ loaderTime = 1
 
 machineName <- as.character(Sys.info()['nodename'])
 if(machineName=='soils-discovery'){
-  rootDir <- '/mnt/data/BARS'
+  rootDir <- '/srv/shiny-server/BARS'
   dataStoreDir <- '/mnt/data/BARS/SoilPropertyPredictions'
   source(paste0( rootDir, '/appUtils.R'))
   
