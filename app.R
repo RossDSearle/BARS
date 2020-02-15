@@ -214,8 +214,6 @@ shiny::shinyApp(
        
         setView(lng = 148.689633, lat = -34.483, zoom = 13) %>%
         
-        # addControlGPS() %>%
-        
         addLayersControl(
           baseGroups = c("Satelite Image", "Map"),
           overlayGroups = c("Moisture Maps"),
@@ -231,66 +229,59 @@ shiny::shinyApp(
       req(input$drawSMmapbtn)
       
       
-      # req( RV$sensorLocs)
-      # bs <- RV$sensorLocs
-      # outDf <- data.frame()
-      # 
-      # itl <- 100/nrow(bs)
-      # 
-      # depth <- '1'
-      # DataType <- 'Soil-Moisture'
-      # day <- '2020-01-10T00%3A00%3A00'
-      # 
-      # for(i in 1:nrow(bs)){
-      #   print(i)
-      #   
-      #   itl <- round((100/(nrow(bs) ) * i))
-      #   updateF7Progress(session, id = "pg1", value = itl)
-      #   
-      #   sid <- bs$SiteID[i]
-      #   d1 <- as.Date(day)
-      #   d2 <- d1-10
-      #   d3 <- paste0(d2, 'T00:00:00')
-      #   
-      #   sens <- RV$SoilMOistureSensors[ RV$SoilMOistureSensors$SiteID == sid, ]
-      #   sens1 <- sens[grepl(paste0('_', depth, '_'), sens$SensorID), ]
-      #   sens2 <- sens1[grepl(paste0('_dielectric_constant'), sens1$SensorID), ]
-      #   
-      #   url <- paste0('http://esoil.io/SensorFederationWebAPI/SensorAPI/getSensorDataStreams?siteid=', sid, '&sensortype=Soil-Moisture&sensorid=', sens2$SensorID, '&startdate=', d3)
-      #   
-      #   response <- GET(url)
-      #   stream <- content(response, as="text", encoding	='UTF-8')
-      #   ts <- convertJSONtoTS(stream)
-      #   rec <- tail(ts, 1)
-      #   index(rec)[1]
-      #   df <- data.frame(SiteID=sid, dt= index(rec)[1], y=bs$Latitude[i], x=bs$Longitude[i], SM=rec[1,1])
-      #   colnames(df) <- c('sid', 'dt', 'y', 'x', 'SM') 
-      #   outDf <- rbind(outDf,df)
-      #   
-      # }
-      # 
-      # ext <- extent(bdy)
-      # r <- raster(ext, nrows=100, ncols=100)
-      # 
-      # print(df)
-      # 
-      # xy <- data.frame(x=outDf$x, y=outDf$y)
-      # tps <- Tps(xy, outDf$SM, lon.lat = T, lambda=0.01)
-      # p <- interpolate(r, tps)
-      # p <- mask(p, bdy)
+      req( RV$sensorLocs)
+      bs <- RV$sensorLocs
+      outDf <- data.frame()
+
+      itl <- 100/nrow(bs)
+
+      depth <- '1'
+      DataType <- 'Soil-Moisture'
+      day <- '2020-01-10T00%3A00%3A00'
+
+      for(i in 1:nrow(bs)){
+        print(i)
+
+        itl <- round((100/(nrow(bs) ) * i))
+        updateF7Progress(session, id = "pg1", value = itl)
+
+        sid <- bs$SiteID[i]
+        d1 <- as.Date(day)
+        d2 <- d1-10
+        d3 <- paste0(d2, 'T00:00:00')
+
+        sens <- RV$SoilMOistureSensors[ RV$SoilMOistureSensors$SiteID == sid, ]
+        sens1 <- sens[grepl(paste0('_', depth, '_'), sens$SensorID), ]
+        sens2 <- sens1[grepl(paste0('_dielectric_constant'), sens1$SensorID), ]
+
+        url <- paste0('http://esoil.io/SensorFederationWebAPI/SensorAPI/getSensorDataStreams?siteid=', sid, '&sensortype=Soil-Moisture&sensorid=', sens2$SensorID, '&startdate=', d3)
+
+        response <- GET(url)
+        stream <- content(response, as="text", encoding	='UTF-8')
+        ts <- convertJSONtoTS(stream)
+        rec <- tail(ts, 1)
+        index(rec)[1]
+        df <- data.frame(SiteID=sid, dt= index(rec)[1], y=bs$Latitude[i], x=bs$Longitude[i], SM=rec[1,1])
+        colnames(df) <- c('sid', 'dt', 'y', 'x', 'SM')
+        outDf <- rbind(outDf,df)
+
+      }
+
+      ext <- extent(bdy)
+      r <- raster(ext, nrows=100, ncols=100)
+
+      print(df)
+
+      xy <- data.frame(x=outDf$x, y=outDf$y)
+      tps <- Tps(xy, outDf$SM, lon.lat = T, lambda=0.01)
+      p <- interpolate(r, tps)
+      p <- mask(p, bdy)
       
       
       p<-raster('c:/temp/r.tif')
-      #crs(p) <- CRS("+proj=longlat +datum=WGS84")
-      
       crs(p) <- CRS("+init=epsg:4326")
-      #writeRaster(p, 'c:/temp/r.tif')
-      
       pal <- colorNumeric(c("brown", "lightgreen",  "darkgreen"), values(p),na.color = "transparent")
-      
-      print(pal)
-      
-      #print(head(sdf))
+
       proxysm <- leafletProxy("moistureMap2")
       #proxy %>% clearMarkers()
      # proxy %>% clearControls()
