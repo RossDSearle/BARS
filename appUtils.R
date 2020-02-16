@@ -1,6 +1,28 @@
 
 
 
+
+
+
+getBucket <- function(SiteID, currentSW){
+
+  rec <- tail(currentSW, 1)
+  recv <- t(rec)
+  rownames(recv) <- NULL
+  
+  x <- c(15, 15, 16, 17, 18, 20, 20, 22, 40,  42, 42, 43, 45, 46, 47, 48)
+  y <- c(30, 40, 50, 60, 70, 80, 90, 100, 100, 90, 80, 70, 60, 50, 40, 30)
+  
+  xm <- c(15, 15, 16, 17, 18, 20, 20, 22, rev(recv[,1]))
+  ym <- c(30, 40, 50, 60, 70, 80, 90, 100, 100, 90, 80, 70, 60, 50, 40, 30)
+  
+  dfBucket <- data.frame(x,y)
+  dfWater <- data.frame(xm,ym)
+  
+  outDF <- c(dfBucket, dfWater)
+  return(outDF)
+}
+
 convertJSONtoTS <- function(resp){
 
   xin <- fromJSON(resp)
