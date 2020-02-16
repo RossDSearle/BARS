@@ -48,7 +48,7 @@ bdy <- readOGR(paste0( rootDir, '/Data/CoarseBound.shp'))
 
 sdLabels <- c('30 cm', '40 cm','50 cm','60 cm','70 cm','80 cm','90 cm','100 cm')
 sdVals <- c('0', '1', '2','3','4','4','6','7')
-soiDepthsDF <- data.frame(sdLabels, sdVals, stringsAsFactors = F)
+soilDepthsDF <- data.frame(sdLabels, sdVals, stringsAsFactors = F)
 
 
 shiny::shinyApp(
@@ -131,10 +131,10 @@ shiny::shinyApp(
             f7Card(
               title = NULL,
               f7DatePicker( "SMmapDate", label='Select Map Date', value = NULL, min = NULL, max = NULL, format = "yyyy-mm-dd" ),
-              f7Select('SMDepth', "Soil Depth", choices=c('30 cm', '40 cm','50 cm','60 cm','70 cm','80 cm','90 cm','100 cm')),
+              f7Select(inputId = 'SMDepthList', label = "Soil Depth",  choices =  soilDepthsDF$sdLabels),
               HTML('<BR>'),
                #div( style=paste0("width: 100px"),
-               f7Button(inputId = 'drawSMmapbtn', label = "Draw Map", src = NULL, color = 'green', fill = TRUE, outline = F, shadow = T, rounded = T, size = NULL),
+               f7Button(inputId = 'drawSMmapbtn', label = "Draw Soil Moisture Map", src = NULL, color = 'green', fill = TRUE, outline = F, shadow = T, rounded = T, size = NULL),
                #),
               HTML('<BR>'),
               f7Progress(id = "pg1", value = 0, color = "blue"),
@@ -210,18 +210,35 @@ shiny::shinyApp(
     
     output$moistureMap2 <- renderLeaflet({
       
+      req(RV$sensorLocs)
+      sdf <- RV$sensorLocs
+      labs <- lapply(seq(nrow(sdf)), function(i) {
+        paste0( '<li>Site Name : ', sdf[i, "SiteName"], '</li>',
+                '<li>Provider : ', sdf[i, "SensorGroup"], '</li>',
+                '<li>Backend : ', sdf[i, "Backend"], '</li>',
+                '<li>Site ID : ', sdf[i, "SiteID"], '</li>')
+      })
       
       
-      leaflet() %>%
+      leaflet(sdf) %>%
         clearMarkers() %>%
         addTiles(group = "Map") %>%
         addProviderTiles("Esri.WorldImagery", options = providerTileOptions(noWrap = TRUE), group = "Satelite Image") %>%
        
         setView(lng = 148.689633, lat = -34.483, zoom = 13) %>%
         
+        addCircleMarkers(   lng = ~Longitude, lat = ~Latitude,
+                                        label = lapply(labs, HTML),
+                                        stroke = FALSE,
+                                        fillOpacity = 1,
+                                        color = 'blue',
+                                        radius = 5,
+                                        layerId=paste0(sdf$SiteID),
+                                        group = "SM Probes" ) %>%
+        
         addLayersControl(
           baseGroups = c("Satelite Image", "Map"),
-          overlayGroups = c("Moisture Map"),
+          overlayGroups = c("Moisture Map", 'SM Probes'),
           options = layersControlOptions(collapsed = T)
         )
     })
@@ -232,10 +249,10 @@ shiny::shinyApp(
       
       req(input$drawSMmapbtn)
       
-     print(soiDepthsDF)
-     dl <- soiDepthsDF[soiDepthsDF$sdLabels==input$SMDepth,]
+     print(paste0('XXXXXXX  ' , input$SMDepthList))
+     depth <- soilDepthsDF[soilDepthsDF$sdLabels==input$SMDepthList, 2]
      
-     print(paste0('dl = ', dl))
+     print(paste0('dl = ', depth))
       
       req( RV$sensorLocs)
       bs <- RV$sensorLocs
@@ -243,7 +260,7 @@ shiny::shinyApp(
 
       itl <- 100/nrow(bs)
 
-      depth <- '1'
+     
       DataType <- 'Soil-Moisture'
       day <- input$SMmapDate
 
@@ -286,16 +303,19 @@ shiny::shinyApp(
       p <- mask(p, bdy)
       
       
-     # p<-raster('c:/temp/r.tif')
+
       crs(p) <- CRS("+init=epsg:4326")
       pal <- colorNumeric(c("brown", "lightgreen",  "darkgreen"), values(p),na.color = "transparent")
+      
+      
 
-      proxysm <- leafletProxy("moistureMap2")
-      #proxy %>% clearMarkers()
-     # proxy %>% clearControls()
+      proxysm <- leafletProxy("moistureMap2", data = RV$sensorLocs)
+      #proxysm %>% clearMarkers()
+      proxysm %>% clearControls()
      
       proxysm %>% addRasterImage(p, colors = pal, opacity = 0.8 ,  group = "Moisture Map")
       proxysm %>% leaflet::addLegend(pal = pal, values = values(p), title = 'Soil Moisture', position = "bottomleft" )
+      
       
     } , ignoreInit = TRUE   )
     
