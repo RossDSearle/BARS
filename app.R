@@ -17,6 +17,7 @@ library(shinyalert)
 library(shinyBS)
 library(fields)
 
+
 defWidth = '380px'
 loaderTime = 1
 numberofDaysSinceToday <- 10
@@ -54,7 +55,7 @@ soilDepthsDF <- data.frame(sdLabels, sdVals, stringsAsFactors = F)
 shiny::shinyApp(
   ui = f7Page(
     title = "BARS",
-    init = f7Init(skin = "auto", theme = "light", filled = T, color = 'lightblue', pullToRefresh = T ),
+    init = f7Init(skin = "auto", theme = "light", filled = T, color = 'lightblue'),
     
     useShinyjs(),
     
