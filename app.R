@@ -92,16 +92,11 @@ shiny::shinyApp(
            tags$div( style=paste0("width: ", defWidth),
               f7Card(
               title = NULL,
-              #sliderInput("obs1", "Number of observations", 0, 1000, 500)
+           
+              f7Select(inputId = 'SMDepth', label = "Select Soil Moisture Depth (cm)", c(30, 40, 50,60,70,80,90,100)),
               
-              
-              f7Select('SMDepth', "Select Soil Moisture Depth (cm)", c(30, 40, 50,60,70,80,90,100)),
-              HTML('<BR>'),
               leafletOutput("moistureMap", height = 400 )
-              # footer = tagList(
-              #   #f7Button(color = "blue", label = "My button", src = "https://www.google.com"),
-              #   f7Badge("Badge", color = "green")
-              # )
+              
             )
             )
           ), side = "left" )
@@ -127,7 +122,7 @@ shiny::shinyApp(
           f7Shadow(
             intensity = 10,
             hover = TRUE,
-           div( style=paste0("width: ", defWidth),
+           div( style=paste0("width: ", defWidth ,"; align='left'; vertical-align: middle;"),
             f7Card(
               title = NULL,
               f7DatePicker( "SMmapDate", label='Select Map Date', value = NULL, min = NULL, max = NULL, format = "yyyy-mm-dd" ),
@@ -351,7 +346,7 @@ shiny::shinyApp(
           maxVal <- max(RV$currentTS)
 
           dygraph(RV$currentTS ,  main = paste0('SoilMoisture'), ylab = 'Soil Moisture')%>%
-            dyAxis("y", label = 'Soil Moisture', valueRange = c(0, maxVal)) %>%
+            dyAxis("y", label = 'Soil Moisture', valueRange = c(10, 40)) %>%
             dyOptions(axisLineWidth = 1.5, fillGraph = F, drawGrid = T, titleHeight = 26) %>%
             dyLegend(show = "follow", hideOnMouseOut = T, labelsSeparateLines = T)  %>%
             dyRangeSelector()
