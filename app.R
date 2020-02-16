@@ -19,6 +19,7 @@ library(fields)
 
 defWidth = '380px'
 loaderTime = 1
+numberofDaysSinceToday <- 10
 
 machineName <- as.character(Sys.info()['nodename'])
 if(machineName=='soils-discovery'){
@@ -44,6 +45,10 @@ spts <- spTransform(soilLocs, CRS.new)
 today <- paste0(Sys.Date(), 'T00:00:00')
 
 bdy <- readOGR(paste0( rootDir, '/Data/CoarseBound.shp'))
+
+sdLabels <- c('30 cm', '40 cm','50 cm','60 cm','70 cm','80 cm','90 cm','100 cm')
+sdVals <- c('0', '1', '2','3','4','4','6','7')
+soiDepthsDF <- data.frame(sdLabels, sdVals, stringsAsFactors = F)
 
 
 shiny::shinyApp(
@@ -126,7 +131,7 @@ shiny::shinyApp(
             f7Card(
               title = NULL,
               f7DatePicker( "SMmapDate", label='Select Map Date', value = NULL, min = NULL, max = NULL, format = "yyyy-mm-dd" ),
-             
+              f7Select('SMDepth', "Soil Depth", choices=c('30 cm', '40 cm','50 cm','60 cm','70 cm','80 cm','90 cm','100 cm')),
               HTML('<BR>'),
                #div( style=paste0("width: 100px"),
                f7Button(inputId = 'drawSMmapbtn', label = "Draw Map", src = NULL, color = 'green', fill = TRUE, outline = F, shadow = T, rounded = T, size = NULL),
@@ -141,6 +146,7 @@ shiny::shinyApp(
             )
           )
         ),
+       
         f7Tab(
           tabName = "Weather",
           icon = f7Icon("cloud_heavyrain_fill"),
@@ -215,7 +221,7 @@ shiny::shinyApp(
         
         addLayersControl(
           baseGroups = c("Satelite Image", "Map"),
-          overlayGroups = c("Moisture Maps"),
+          overlayGroups = c("Moisture Map"),
           options = layersControlOptions(collapsed = T)
         )
     })
@@ -223,10 +229,13 @@ shiny::shinyApp(
    ###################   Draw the soil moisture maps   ##########
      
     observeEvent(input$drawSMmapbtn, {
-    #observe({
       
       req(input$drawSMmapbtn)
       
+     print(soiDepthsDF)
+     dl <- soiDepthsDF[soiDepthsDF$sdLabels==input$SMDepth,]
+     
+     print(paste0('dl = ', dl))
       
       req( RV$sensorLocs)
       bs <- RV$sensorLocs
@@ -236,7 +245,7 @@ shiny::shinyApp(
 
       depth <- '1'
       DataType <- 'Soil-Moisture'
-      day <- '2020-01-10T00%3A00%3A00'
+      day <- input$SMmapDate
 
       for(i in 1:nrow(bs)){
         print(i)
@@ -246,7 +255,7 @@ shiny::shinyApp(
 
         sid <- bs$SiteID[i]
         d1 <- as.Date(day)
-        d2 <- d1-10
+        d2 <- d1-numberofDaysSinceToday
         d3 <- paste0(d2, 'T00:00:00')
 
         sens <- RV$SoilMOistureSensors[ RV$SoilMOistureSensors$SiteID == sid, ]
@@ -277,7 +286,7 @@ shiny::shinyApp(
       p <- mask(p, bdy)
       
       
-      p<-raster('c:/temp/r.tif')
+     # p<-raster('c:/temp/r.tif')
       crs(p) <- CRS("+init=epsg:4326")
       pal <- colorNumeric(c("brown", "lightgreen",  "darkgreen"), values(p),na.color = "transparent")
 
@@ -285,7 +294,7 @@ shiny::shinyApp(
       #proxy %>% clearMarkers()
      # proxy %>% clearControls()
      
-      proxysm %>% addRasterImage(p, colors = pal, opacity = 0.8 ,  group = "Soil Maps")
+      proxysm %>% addRasterImage(p, colors = pal, opacity = 0.8 ,  group = "Moisture Map")
       proxysm %>% leaflet::addLegend(pal = pal, values = values(p), title = 'Soil Moisture', position = "bottomleft" )
       
     } , ignoreInit = TRUE   )
