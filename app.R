@@ -17,6 +17,7 @@ library(shinyalert)
 library(shinyBS)
 library(fields)
 
+
 defWidth = '380px'
 loaderTime = 1
 numberofDaysSinceToday <- 10
@@ -54,7 +55,7 @@ soilDepthsDF <- data.frame(sdLabels, sdVals, stringsAsFactors = F)
 shiny::shinyApp(
   ui = f7Page(
     title = "BARS",
-    init = f7Init(skin = "auto", theme = "light", filled = T, color = 'lightblue', pullToRefresh = T ),
+    init = f7Init(skin = "auto", theme = "light", filled = T, color = 'lightblue'),
     
     useShinyjs(),
     
@@ -76,9 +77,9 @@ shiny::shinyApp(
         right_panel = F
       ),
       
-     
       
-     
+      
+      
       f7Tabs(
         animated = T,
         #swipeable = TRUE,
@@ -89,15 +90,15 @@ shiny::shinyApp(
           f7Float( f7Shadow(
             intensity = 10,
             hover = TRUE,
-           tags$div( style=paste0("width: ", defWidth),
-              f7Card(
-              title = NULL,
-           
-              f7Select(inputId = 'SMDepth', label = "Select Soil Moisture Depth (cm)", c(30, 40, 50,60,70,80,90,100)),
-              
-              leafletOutput("moistureMap", height = 400 )
-              
-            )
+            tags$div( style=paste0("width: ", defWidth),
+                      f7Card(
+                        title = NULL,
+                        
+                        f7Select(inputId = 'SMDepth', label = "Select Soil Moisture Depth (cm)", c(30, 40, 50,60,70,80,90,100)),
+                        
+                        leafletOutput("moistureMap", height = 400 )
+                        
+                      )
             )
           ), side = "left" ),
           
@@ -109,42 +110,42 @@ shiny::shinyApp(
                       f7Card(
                         title = "Current Soil Water Summary",
                         
-          f7Gauge(
-            id = "swTotGauge",
-            type  = "semicircle",
-            value = 0,
-            borderColor = "#2196f3",
-            borderWidth = 30,
-           
-            valueFontSize = 30,
-            valueTextColor = "#2196f3",
-            labelText = "Total Soil Water"
-          )
-          ))), side = "left" ),
+                        f7Gauge(
+                          id = "swTotGauge",
+                          type  = "semicircle",
+                          value = 0,
+                          borderColor = "#2196f3",
+                          borderWidth = 30,
+                          
+                          valueFontSize = 30,
+                          valueTextColor = "#2196f3",
+                          labelText = "Total Soil Water"
+                        )
+                      ))), side = "left" ),
           
-           f7Float(  f7Shadow(
+          f7Float(  f7Shadow(
             intensity = 100,
             hover = TRUE,
             tags$div( style=paste0("width: ", defWidth),
-            f7Card(
-              title = NULL,
-              
-              dygraphOutput("mositureChart1", width = "350", height = "300px")
-
+                      f7Card(
+                        title = NULL,
+                        
+                        dygraphOutput("mositureChart1", width = "350", height = "300px")
+                        
+                      )
             )
-        )
           ), side = "left" ),
-        
-        f7Float( f7Shadow(
-          intensity = 10,
-          hover = TRUE,
-          tags$div( style=paste0("width: ", defWidth),
-                    f7Card(
-                      title = 'Soil Water Bucket',
-                      plotOutput("bucketPlot")
-                    )
-          )
-        ), side = "left" )
+          
+          f7Float( f7Shadow(
+            intensity = 10,
+            hover = TRUE,
+            tags$div( style=paste0("width: ", defWidth),
+                      f7Card(
+                        title = 'Soil Water Bucket',
+                        plotOutput("bucketPlot")
+                      )
+            )
+          ), side = "left" )
         ),
         
         f7Tab(
@@ -154,26 +155,26 @@ shiny::shinyApp(
           f7Shadow(
             intensity = 10,
             hover = TRUE,
-           div( style=paste0("width: ", defWidth ,"; align='left'; vertical-align: middle;"),
-            f7Card(
-              title = NULL,
-              f7DatePicker( "SMmapDate", label='Select Map Date', value = NULL, min = NULL, max = NULL, dateFormat = "yyyy-mm-dd" ),
-              f7Select(inputId = 'SMDepthList', label = "Soil Depth",  choices =  soilDepthsDF$sdLabels),
-              HTML('<BR>'),
-               #div( style=paste0("width: 100px"),
-               f7Button(inputId = 'drawSMmapbtn', label = "Draw Soil Moisture Map", src = NULL, color = 'green', fill = TRUE, outline = F, shadow = T, rounded = T, size = NULL),
-               #),
-              HTML('<BR>'),
-              f7Progress(id = "pg1", value = 0, color = "blue"),
-            
-              
-              leafletOutput("moistureMap2", height = 400 )
-              
-            )
+            div( style=paste0("width: ", defWidth ,"; align='left'; vertical-align: middle;"),
+                 f7Card(
+                   title = NULL,
+                   f7DatePicker( "SMmapDate", label='Select Map Date', value = NULL, min = NULL, max = NULL, format = "yyyy-mm-dd" ),
+                   f7Select(inputId = 'SMDepthList', label = "Soil Depth",  choices =  soilDepthsDF$sdLabels),
+                   HTML('<BR>'),
+                   #div( style=paste0("width: 100px"),
+                   f7Button(inputId = 'drawSMmapbtn', label = "Draw Soil Moisture Map", src = NULL, color = 'green', fill = TRUE, outline = F, shadow = T, rounded = T, size = NULL),
+                   #),
+                   HTML('<BR>'),
+                   f7Progress(id = "pg1", value = 0, color = "blue"),
+                   
+                   
+                   leafletOutput("moistureMap2", height = 400 )
+                   
+                 )
             )
           )
         ),
-       
+        
         f7Tab(
           tabName = "Weather",
           icon = f7Icon("cloud_heavyrain_fill", old = F),
@@ -210,30 +211,30 @@ shiny::shinyApp(
             intensity = 10,
             hover = TRUE,
             f7Card(
-
+              
               title = NULL,
               fluidRow( f7Select('SoilPropList', "Select soil attribute", choices=c('clay', 'ecec', 'phc', 'soc')),  f7Select('SoilDepthList', "Select depth (cm)", choices=c('d1', 'd2', 'd3', 'd4'))),
               #f7Select('SoilPropList', "Select soil attribute", choices=c('clay', 'ecec', 'phc', 'soc')),
               HTML('<BR>'),
               leafletOutput("soilMap", height = 400),
-             rHandsontableOutput('soilDataTable' )
+              rHandsontableOutput('soilDataTable' )
               #tableOutput('soilDataTable' )
             )
           )
         )
-       
+        
       )
     )
   ),
   server = function(input, output, session) {
-
+    
     RV <- reactiveValues()
     RV$currentTS <- NULL
     RV$currentSite <- NULL
     RV$sensorLocs <- NULL
     RV$currentSoil <- NULL
     RV$SoilMOistureSensors <- NULL
-
+    
     
     # output$bucketPlot <- renderPlot({
     #   req( RV$currentTS)
@@ -261,10 +262,10 @@ shiny::shinyApp(
     
     output$bucketPlot <- renderPlot({
       req( RV$currentTS)
-     
+      
       buk <- getBucket("sid", RV$currentTS)
       
-     
+      
       sw <- round(RV$currentTS[1,1], digits = 1)
       updateF7Gauge(session, id = 'swTotGauge', value = sw)
       
@@ -302,17 +303,17 @@ shiny::shinyApp(
         clearMarkers() %>%
         addTiles(group = "Map") %>%
         addProviderTiles("Esri.WorldImagery", options = providerTileOptions(noWrap = TRUE), group = "Satelite Image") %>%
-       
+        
         setView(lng = 148.689633, lat = -34.483, zoom = 13) %>%
         
         addCircleMarkers(   lng = ~Longitude, lat = ~Latitude,
-                                        label = lapply(labs, HTML),
-                                        stroke = FALSE,
-                                        fillOpacity = 1,
-                                        color = 'blue',
-                                        radius = 5,
-                                        layerId=paste0(sdf$SiteID),
-                                        group = "SM Probes" ) %>%
+                            label = lapply(labs, HTML),
+                            stroke = FALSE,
+                            fillOpacity = 1,
+                            color = 'blue',
+                            radius = 5,
+                            layerId=paste0(sdf$SiteID),
+                            group = "SM Probes" ) %>%
         
         addLayersControl(
           baseGroups = c("Satelite Image", "Map"),
@@ -321,44 +322,44 @@ shiny::shinyApp(
         )
     })
     
-   ###################   Draw the soil moisture maps   ##########
-     
+    ###################   Draw the soil moisture maps   ##########
+    
     observeEvent(input$drawSMmapbtn, {
       
       req(input$drawSMmapbtn)
       
-     print(paste0('XXXXXXX  ' , input$SMDepthList))
-     depth <- soilDepthsDF[soilDepthsDF$sdLabels==input$SMDepthList, 2]
-     
-     print(paste0('dl = ', depth))
+      print(paste0('XXXXXXX  ' , input$SMDepthList))
+      depth <- soilDepthsDF[soilDepthsDF$sdLabels==input$SMDepthList, 2]
+      
+      print(paste0('dl = ', depth))
       
       req( RV$sensorLocs)
       bs <- RV$sensorLocs
       outDf <- data.frame()
-
+      
       itl <- 100/nrow(bs)
-
-     
+      
+      
       DataType <- 'Soil-Moisture'
       day <- input$SMmapDate
-
+      
       for(i in 1:nrow(bs)){
         print(i)
-
+        
         itl <- round((100/(nrow(bs) ) * i))
         updateF7Progress(session, id = "pg1", value = itl)
-
+        
         sid <- bs$SiteID[i]
         d1 <- as.Date(day)
         d2 <- d1-numberofDaysSinceToday
         d3 <- paste0(d2, 'T00:00:00')
-
+        
         sens <- RV$SoilMOistureSensors[ RV$SoilMOistureSensors$SiteID == sid, ]
         sens1 <- sens[grepl(paste0('_', depth, '_'), sens$SensorID), ]
         sens2 <- sens1[grepl(paste0('_dielectric_constant'), sens1$SensorID), ]
-
+        
         url <- paste0('http://esoil.io/SensorFederationWebAPI/SensorAPI/getSensorDataStreams?siteid=', sid, '&sensortype=Soil-Moisture&sensorid=', sens2$SensorID, '&startdate=', d3)
-
+        
         response <- GET(url)
         stream <- content(response, as="text", encoding	='UTF-8')
         ts <- convertJSONtoTS(stream)
@@ -367,30 +368,30 @@ shiny::shinyApp(
         df <- data.frame(SiteID=sid, dt= index(rec)[1], y=bs$Latitude[i], x=bs$Longitude[i], SM=rec[1,1])
         colnames(df) <- c('sid', 'dt', 'y', 'x', 'SM')
         outDf <- rbind(outDf,df)
-
+        
       }
-
+      
       ext <- extent(bdy)
       r <- raster(ext, nrows=100, ncols=100)
-
+      
       print(df)
-
+      
       xy <- data.frame(x=outDf$x, y=outDf$y)
       tps <- Tps(xy, outDf$SM, lon.lat = T, lambda=0.01)
       p <- interpolate(r, tps)
       p <- mask(p, bdy)
       
       
-
+      
       crs(p) <- CRS("+init=epsg:4326")
       pal <- colorNumeric(c("brown", "lightgreen",  "darkgreen"), values(p),na.color = "transparent")
       
       
-
+      
       proxysm <- leafletProxy("moistureMap2", data = RV$sensorLocs)
       #proxysm %>% clearMarkers()
       proxysm %>% clearControls()
-     
+      
       proxysm %>% addRasterImage(p, colors = pal, opacity = 0.8 ,  group = "Moisture Map")
       proxysm %>% leaflet::addLegend(pal = pal, values = values(p), title = 'Soil Moisture', position = "bottomleft" )
       
@@ -403,46 +404,46 @@ shiny::shinyApp(
       click<-input$moistureMap_marker_click
       if(is.null(click))
         return()
-
+      
       RV$currentTS <- NULL
-
+      
       DataType <- 'Soil-Moisture'
-
+      
       sid <- click$id
       url <- paste0(SenFedServer, "/getSensorDataStreams?siteid=", sid,"&sensortype=", DataType, "&aggperiod=days")
-
+      
       response <- GET(url)
       stop_for_status(response) # stop if the response is an error
       sensorData <- content(response, as="text")
       ts <- convertJSONtoTS(sensorData)
-      write.csv(ts, 'c:/temp/ts.csv', row.names = F)
+      #write.csv(ts, 'c:/temp/ts.csv', row.names = F)
       RV$currentTS <- ts
     })
-
-
+    
+    
     ################## Render the Chart from a map drill  ##################
     output$mositureChart1 <- renderDygraph({
-
+      
       if(!is.null(RV$currentTS)){
-
+        
         isolate({
-
+          
           maxVal <- max(RV$currentTS)
-
+          
           dygraph(RV$currentTS ,  main = paste0('SoilMoisture'), ylab = 'Soil Moisture')%>%
             dyAxis("y", label = '', valueRange = c(10, 40)) %>%
             dyOptions(axisLineWidth = 1.5, fillGraph = F, drawGrid = T, titleHeight = 26) %>%
             dyLegend(show = "follow", hideOnMouseOut = T, labelsSeparateLines = T)  %>%
             dyRangeSelector()
-
+          
         })
       }
     })
-
-   
+    
+    
     ########  Get sensor locations   ##############
     
-     observe({
+    observe({
       url <- paste0(SenFedServer,"/getSensorLocations?sensortype=Soil-Moisture" )
       response <- GET(url)
       stop_for_status(response) # stop if the response is an error
@@ -450,7 +451,7 @@ shiny::shinyApp(
       bs <- sensorLocs[sensorLocs$SensorGroup == 'Booroowa',]
       RV$sensorLocs <- bs
     })
-
+    
     ########  Get Boowora Sensor Info   ##############
     
     observe({
@@ -463,7 +464,7 @@ shiny::shinyApp(
       RV$SoilMOistureSensors <- sensors
     })
     
-
+    
     observe({
       req(input$SoilPropList)
       sdf <- RV$sensorLocs
@@ -474,12 +475,12 @@ shiny::shinyApp(
                 #'<li>Access : ', sdf[i, "Access"], '</li>',
                 '<li>Site ID : ', sdf[i, "SiteID"], '</li>')
       })
-
+      
       colCnt <- length(unique(sdf[,input$SensorLabel]))
       colCats <- unique(sdf[,input$SensorLabel])
       colField <- sdf[,input$SensorLabel]
       factpal <-colorFactor(RColorBrewer::brewer.pal(colCnt, 'Spectral'), colField)
-
+      
       proxy <- leafletProxy("moistureMap", data = RV$sensorLocs)
       proxy %>% clearMarkers()
       proxy %>% clearControls()
@@ -492,23 +493,23 @@ shiny::shinyApp(
                                     layerId=paste0(sdf$SiteID),
                                     group = "SW Probes" )
     })
-
+    
     output$moistureMap <- renderLeaflet({
       leaflet() %>%
         clearMarkers() %>%
         addTiles(group = "Map") %>%
         addProviderTiles("Esri.WorldImagery", options = providerTileOptions(noWrap = TRUE), group = "Satelite Image") %>%
         setView(lng = 148.692, lat = -34.475, zoom = 14) %>%
-
+        
         # addControlGPS() %>%
-
+        
         addLayersControl(
           baseGroups = c("Satelite Image", "Map"),
           overlayGroups = c( "SW Probes"),
           options = layersControlOptions(collapsed = T)
         )
     })
-
+    
     
     output$soilMap <- renderLeaflet({
       
@@ -540,16 +541,16 @@ shiny::shinyApp(
       sdf <- soilLocs
       labs <- lapply(seq(nrow(sdf@data)), function(i) {
         paste0( '<li>Site Name : ', sdf@data[i, "locID"], '</li>')
-                
+        
       })
-     
-
+      
+      
       rPath <- paste0(dataStoreDir, '/', input$SoilPropList, '/', input$SoilPropList, '_', input$SoilDepthList, '_50th_percentile.tif' )
       print(rPath)
       r <- raster(rPath)
       crs(r) <- CRS('+proj=utm +zone=55 +south +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs')
       pal <- colorNumeric(c("brown", "lightgreen",  "darkgreen"), values(r),na.color = "transparent")
-     
+      
       
       print(head(sdf))
       proxy <- leafletProxy("soilMap", data = spts)
@@ -558,13 +559,13 @@ shiny::shinyApp(
       proxy %>% addRasterImage(r, colors = pal, opacity = 0.8 ,  group = "Soil Maps")
       proxy %>% leaflet::addLegend(pal = pal, values = values(r), title = input$SoilPropList)
       proxy %>% addCircleMarkers(  # lng = ~easting, lat = ~northing,
-                                     label = lapply(labs, HTML),
-                                    stroke = FALSE,
-                                    fillOpacity = 1,
-                                    color = 'red',
-                                    radius = 8,
-                                    layerId=paste0(sdf$locID),
-                                    group = "Soil Observations" )
+        label = lapply(labs, HTML),
+        stroke = FALSE,
+        fillOpacity = 1,
+        color = 'red',
+        radius = 8,
+        layerId=paste0(sdf$locID),
+        group = "Soil Observations" )
     })
     
     ################  Get data from Clicking on a sensor  #################
@@ -606,7 +607,7 @@ shiny::shinyApp(
         return(NULL)
       }
     })
-
+    
     # output$soilDataTable <- renderTable({
     #   RV$currentSoil
     # }, rownames = F)
