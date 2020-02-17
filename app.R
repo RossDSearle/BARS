@@ -16,8 +16,9 @@ library(shinyjs)
 library(shinyalert)
 library(shinyBS)
 library(fields)
+library(lubridate)
 
-library(flexdashboard)
+#library(flexdashboard)
 
 
 defWidth = '380px'
@@ -122,7 +123,7 @@ shiny::shinyApp(
                           valueFontSize = 30,
                           valueTextColor = "#2196f3",
                           labelText = "Total Soil Water"
-                        ),
+                        )
                         
                        
                         #gaugeOutput("gauge", width = "600px", height = "600px"),
@@ -201,6 +202,21 @@ shiny::shinyApp(
           f7Shadow(
             intensity = 10,
             hover = TRUE,
+            
+            tags$div( style=paste0("width: ", defWidth),
+                      
+                      f7Card(
+                        title = "Todays Weather",
+                        verbatimTextOutput("todaysCurrentTemperature"),
+                        verbatimTextOutput("todaysMinTemperature"),
+                        verbatimTextOutput("todaysMaxTemperature"),
+                        
+                        verbatimTextOutput("todaysCurrentHumidity"),
+                        verbatimTextOutput("todaysMinHumidity"),
+                        verbatimTextOutput("todaysMaxHumidity")
+                      ),
+                      
+                      
             f7Card(
               title = "Weather History",
               prettyRadioButtons(
@@ -209,13 +225,14 @@ shiny::shinyApp(
                 c("Rainfall" = "Rainfall",
                   "Temperature" = "Temperature",
                   "Humidity" = "Humidity",
-                  "Windspeed" = "Wind speed"),
+                  "Windspeed" = "Wind-Speed"),
                 inline = TRUE,
                 status = "success",
                 animation = "pulse"
               ),
-              dygraphOutput("WeatherHistoryChart", width = "350", height = "300px")
-              
+              dygraphOutput("WeatherHistoryChart", height = "300px")
+            )
+            
             )
           )
         ),
@@ -251,6 +268,49 @@ shiny::shinyApp(
     RV$currentSoil <- NULL
     RV$SoilMOistureSensors <- NULL
     RV$m <- NULL
+    RV$TodaysWeather <- NULL
+    
+    
+    observe({
+      today <- str_replace(str_remove(Sys.Date()-hours(10), ' UTC'), ' ', 'T')
+      url <- paste0('http://esoil.io/SensorFederationWebAPI/SensorAPI/getSensorDataStreams?siteid=boorowa_aws_148.6887_-34.4732&sensorid=boorowa.environdata.AWS1.AVERAGE-Air-Temperature&sensortype=Temperature&aggperiod=none&startdate=',today)
+      print(url)
+      response <- GET(url)
+      stream <- content(response, as="text", encoding	='UTF-8')
+      ts <- convertJSONtoTS(stream)
+      RV$TodaysWeather$CurrentTemp <- tail(ts, 1)
+      RV$TodaysWeather$MinTemp <- min(ts)
+      RV$TodaysWeather$MaxTemp <- max(ts)
+      
+      today <- str_replace(str_remove(Sys.Date()-hours(10), ' UTC'), ' ', 'T')
+      url <- paste0('http://esoil.io/SensorFederationWebAPI/SensorAPI/getSensorDataStreams?siteid=boorowa_aws_148.6887_-34.4732&sensorid=boorowa.environdata.AWS1.AVERAGE-Relative-Humidity&sensortype=Temperature&aggperiod=none&startdate=',today)
+      print(url)
+      response <- GET(url)
+      stream <- content(response, as="text", encoding	='UTF-8')
+      ts <- convertJSONtoTS(stream)
+      RV$TodaysWeather$CurrentHumidity <- tail(ts, 1)
+      RV$TodaysWeather$MinHumidity <- min(ts)
+      RV$TodaysWeather$MaxHumidity <- max(ts)
+      
+    })
+    
+    output$todaysCurrentTemperature <- renderText({paste0('Current Temperature : ', RV$TodaysWeather$CurrentTemp) })
+    output$todaysMaxTemperature <- renderText({ paste0('Maximum Temperature : ', RV$TodaysWeather$MaxTemp) })
+    output$todaysMinTemperature <- renderText({ paste0('Minimum Temperature : ', RV$TodaysWeather$MinTemp) })
+    
+    output$todaysCurrentHumidity <- renderText({paste0('Current Temperature : ', RV$TodaysWeather$CurrentHumidity) })
+    output$todaysMaxHumidity <- renderText({ paste0('Maximum Temperature : ', RV$TodaysWeather$MaxHumidity) })
+    output$todaysMinHumidity <- renderText({ paste0('Minimum Temperature : ', RV$TodaysWeather$MinHumidity) })
+    
+      # today <- str_replace(str_remove(Sys.Date()-hours(10), ' UTC'), ' ', 'T')
+      # url <- paste0('http://esoil.io/SensorFederationWebAPI/SensorAPI/getSensorDataStreams?siteid=boorowa_aws_148.6887_-34.4732&sensorid=boorowa.environdata.AWS1.AVERAGE-Air-Temperature&sensortype=Temperature&aggperiod=none&startdate=',today)
+      # print(url)
+      # response <- GET(url)
+      # stream <- content(response, as="text", encoding	='UTF-8')
+      # ts <- convertJSONtoTS(stream)
+      # 
+      # tail(ts, 1)
+      
     
     
     ################## Render the Chart from a map drill  ##################
@@ -272,7 +332,7 @@ shiny::shinyApp(
             senid <- 'boorowa.environdata.AWS1.AVERAGE-Air-Temperature'
           }else if(input$WeatherHistoryButtons == 'Humidity'){
             senid <- 'boorowa.environdata.AWS1.AVERAGE-Relative-Humidity'
-          }else if(input$WeatherHistoryButtons == 'Wind speed'){
+          }else if(input$WeatherHistoryButtons == 'Wind-Speed'){
             senid <- 'boorowa.environdata.AWS1.AVERAGE-Wind-Speed-3m'
           }
           
@@ -289,7 +349,9 @@ shiny::shinyApp(
           dygraph(ts ,  main = paste0(''), ylab = '')%>%
             dyOptions(axisLineWidth = 1.5, fillGraph = F, drawGrid = T, titleHeight = 0) %>%
             dyLegend(show = "follow", hideOnMouseOut = T)  %>%
+            dyAxis("y",axisLabelWidth = 10)  %>%
             dyRangeSelector()
+          
           
         
       }
@@ -321,16 +383,16 @@ shiny::shinyApp(
     # })
     
     
-    output$gauge = renderGauge({
-      gauge(RV$m, 
-            min = 0, 
-            max = 100, 
-            label = "Total Soil Wate",
-            sectors = gaugeSectors(success = c(0.5, 1), 
-                                   warning = c(0.3, 0.5),
-                                   danger = c(0, 0.3)))
-    })
-    
+    # output$gauge = renderGauge({
+    #   gauge(RV$m, 
+    #         min = 0, 
+    #         max = 100, 
+    #         label = "Total Soil Wate",
+    #         sectors = gaugeSectors(success = c(0.5, 1), 
+    #                                warning = c(0.3, 0.5),
+    #                                danger = c(0, 0.3)))
+    # })
+    # 
     output$bucketPlot <- renderPlot({
       req( RV$currentTS)
       
