@@ -73,14 +73,12 @@ shiny::shinyApp(
       
       navbar = f7Navbar(
         #title = shiny::tags$div(style="background-image: url('Logos/HdrBkGrdImage.PNG');", tags$img(src = "Logos/csiro.png", width = "40px", height = "40px"), "Boowora Agricultutral Research Station "),
-        title = shiny::tags$div( "Boowora Ag Research Station ",  tags$img(src = "Logos/csiro.png", width = "40px", height = "40px")),
+        title = tags$div(style="vertical-align: middle; float: left" , tags$a(href='https://www.csiro.au/en/Research/AF/Areas/Boorowa-Agricultural-Research-Station', tags$img(src = "Logos/csiro.png", width = "40px", height = "40px", align="left"))), tags$div(style=" vertical-align: middle;", "Boowora Ag Research Station "), 
         hairline = T,
         shadow = T,
         left_panel = T,
         right_panel = F
       ),
-      
-      
       
       
       f7Tabs(
@@ -95,10 +93,10 @@ shiny::shinyApp(
             hover = TRUE,
             tags$div( style=paste0("width: ", defWidth),
                       f7Card(
-                        title = NULL,
+                        title = "Click on a probe location to display info below",
                         
-                        f7Select(inputId = 'SMDepth', label = "Select Soil Moisture Depth (cm)", c(30, 40, 50,60,70,80,90,100)),
-                        
+                       # f7Select(inputId = 'SMDepth', label = "Select Soil Moisture Depth (cm)", c(30, 40, 50,60,70,80,90,100)),
+                       # HTML('<BR>'),
                         leafletOutput("moistureMap", height = 400 )
                         
                       )
