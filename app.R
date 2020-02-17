@@ -17,6 +17,8 @@ library(shinyalert)
 library(shinyBS)
 library(fields)
 
+library(flexdashboard)
+
 
 defWidth = '380px'
 loaderTime = 1
@@ -115,12 +117,29 @@ shiny::shinyApp(
                           type  = "semicircle",
                           value = 0,
                           borderColor = "#2196f3",
-                          borderWidth = 30,
-                          
+                          borderWidth = 40,
+                          size = 300,
                           valueFontSize = 30,
                           valueTextColor = "#2196f3",
                           labelText = "Total Soil Water"
-                        )
+                        ),
+                        
+                       
+                        #gaugeOutput("gauge", width = "600px", height = "600px"),
+                        
+                        # knobInput(
+                        #   inputId = "prefDaysToExtract",
+                        #   label = "Days since today to display",
+                        #   value = 30,
+                        #   min = 1,
+                        #   max = 365,
+                        #   displayPrevious = TRUE, 
+                        #   lineCap = "round",
+                        #   fgColor = "red",
+                        #   inputColor = "Red",
+                        #   bgColor = "#428BCA",
+                        #   immediate = F
+                        # )
                       ))), side = "left" ),
           
           f7Float(  f7Shadow(
@@ -183,23 +202,20 @@ shiny::shinyApp(
             intensity = 10,
             hover = TRUE,
             f7Card(
-              title = "Weather",
+              title = "Weather History",
               prettyRadioButtons(
-                "obs2",
-                "Distribution type:",
-                c("Normal" = "norm",
-                  "Uniform" = "unif",
-                  "Log-normal" = "lnorm",
-                  "Exponential" = "exp"),
+                "WeatherHistoryButtons",
+                "Variable:",
+                c("Rainfall" = "Rainfall",
+                  "Temperature" = "Temperature",
+                  "Humidity" = "Humidity",
+                  "Windspeed" = "Wind speed"),
                 inline = TRUE,
-                status = "warning",
+                status = "success",
                 animation = "pulse"
               ),
-              plotOutput("distPlot2"),
-              footer = tagList(
-                f7Button(color = "blue", label = "My button", src = "https://www.google.com"),
-                f7Badge("Badge", color = "green")
-              )
+              dygraphOutput("WeatherHistoryChart", width = "350", height = "300px")
+              
             )
           )
         ),
@@ -234,6 +250,51 @@ shiny::shinyApp(
     RV$sensorLocs <- NULL
     RV$currentSoil <- NULL
     RV$SoilMOistureSensors <- NULL
+    RV$m <- NULL
+    
+    
+    ################## Render the Chart from a map drill  ##################
+    output$WeatherHistoryChart <- renderDygraph({
+      
+     req(input$WeatherHistoryButtons)
+        
+        
+          
+          d1 <- as.Date(Sys.Date())
+          d2 <- d1-numberofDaysSinceToday
+          d3 <- paste0(d2, 'T00:00:00')
+          
+          print(d3)
+          
+          if(input$WeatherHistoryButtons == 'Rainfall'){
+            senid <- 'boorowa.environdata.AWS1.TOTAL-Rain-Gauge'
+          }else if(input$WeatherHistoryButtons == 'Temperature'){
+            senid <- 'boorowa.environdata.AWS1.AVERAGE-Air-Temperature'
+          }else if(input$WeatherHistoryButtons == 'Humidity'){
+            senid <- 'boorowa.environdata.AWS1.AVERAGE-Relative-Humidity'
+          }else if(input$WeatherHistoryButtons == 'Wind speed'){
+            senid <- 'boorowa.environdata.AWS1.AVERAGE-Wind-Speed-3m'
+          }
+          
+          
+          
+          print(input$WeatherHistoryButtons)
+          
+          url <- paste0('http://esoil.io/SensorFederationWebAPI/SensorAPI/getSensorDataStreams?siteid=boorowa_aws_148.6887_-34.4732&sensorid=', senid,'&sensortype=',input$WeatherHistoryButtons ,'&aggperiod=days&startdate=',d3)
+          print(url)
+          response <- GET(url)
+          stream <- content(response, as="text", encoding	='UTF-8')
+          ts <- convertJSONtoTS(stream)
+          
+          dygraph(ts ,  main = paste0(''), ylab = '')%>%
+            dyOptions(axisLineWidth = 1.5, fillGraph = F, drawGrid = T, titleHeight = 0) %>%
+            dyLegend(show = "follow", hideOnMouseOut = T)  %>%
+            dyRangeSelector()
+          
+        
+      }
+    )
+    
     
     
     # output$bucketPlot <- renderPlot({
@@ -260,6 +321,16 @@ shiny::shinyApp(
     # })
     
     
+    output$gauge = renderGauge({
+      gauge(RV$m, 
+            min = 0, 
+            max = 100, 
+            label = "Total Soil Wate",
+            sectors = gaugeSectors(success = c(0.5, 1), 
+                                   warning = c(0.3, 0.5),
+                                   danger = c(0, 0.3)))
+    })
+    
     output$bucketPlot <- renderPlot({
       req( RV$currentTS)
       
@@ -268,6 +339,7 @@ shiny::shinyApp(
       
       sw <- round(RV$currentTS[1,1], digits = 1)
       updateF7Gauge(session, id = 'swTotGauge', value = sw)
+      RV$m = sw
       
       plot( 0, type="n", main=paste( ''), 
             xlab='Volumteric Soil Mositure (%)', ylab='Soil Depth (cm)',
