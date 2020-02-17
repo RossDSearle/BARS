@@ -22,7 +22,7 @@ library(lubridate)
 
 
 defWidth = '380px'
-loaderTime = 1
+loaderTime = 5
 numberofDaysSinceToday <- 10
 
 machineName <- as.character(Sys.info()['nodename'])
@@ -206,14 +206,26 @@ shiny::shinyApp(
             tags$div( style=paste0("width: ", defWidth),
                       
                       f7Card(
-                        title = "Todays Weather",
+                        title = paste0("Todays Weather (", format(Sys.Date(), format="%B %d %Y"), ')' ),
+                        
+                        verbatimTextOutput("todaysRainfall"),
+                        verbatimTextOutput("todaysMaxRainfall"),
+                        HTML('<BR>'),
                         verbatimTextOutput("todaysCurrentTemperature"),
                         verbatimTextOutput("todaysMinTemperature"),
                         verbatimTextOutput("todaysMaxTemperature"),
-                        
+                        HTML('<BR>'),
                         verbatimTextOutput("todaysCurrentHumidity"),
                         verbatimTextOutput("todaysMinHumidity"),
-                        verbatimTextOutput("todaysMaxHumidity")
+                        verbatimTextOutput("todaysMaxHumidity"),
+                        HTML('<BR>'),
+                        verbatimTextOutput("todaysCurrentWindspeed"),
+                        verbatimTextOutput("todaysMinWindspeed"),
+                        verbatimTextOutput("todaysMaxWindspeed"),
+                        HTML('<BR>'),
+                        verbatimTextOutput("todaysCurrentWindDirection")
+                        # verbatimTextOutput("todaysMinHumidity"),
+                        # verbatimTextOutput("todaysMaxHumidity")
                       ),
                       
                       
@@ -269,10 +281,27 @@ shiny::shinyApp(
     RV$SoilMOistureSensors <- NULL
     RV$m <- NULL
     RV$TodaysWeather <- NULL
+    RV$HistoricalRainfall <- NULL
     
     
-    observe({
+    observe(  {
+      
+      req(RV$HistoricalRainfall)
+      
+      isolate({
       today <- str_replace(str_remove(Sys.Date()-hours(10), ' UTC'), ' ', 'T')
+      
+      url <- paste0('http://esoil.io/SensorFederationWebAPI/SensorAPI/getSensorDataStreams?siteid=boorowa_aws_148.6887_-34.4732&sensorid=boorowa.environdata.AWS1.TOTAL-Rain-Gauge&sensortype=Rainfall&aggperiod=hours&startdate=',today)
+      print(url)
+      response <- GET(url)
+      stream <- content(response, as="text", encoding	='UTF-8')
+      ts <- convertJSONtoTS(stream)
+      RV$TodaysWeather$Rainfall <- sum(ts)
+      RV$TodaysWeather$MaxRainfall <- max(ts)
+      # RV$TodaysWeather$MaxTemp <- max(ts)
+      print(ts)
+      
+      
       url <- paste0('http://esoil.io/SensorFederationWebAPI/SensorAPI/getSensorDataStreams?siteid=boorowa_aws_148.6887_-34.4732&sensorid=boorowa.environdata.AWS1.AVERAGE-Air-Temperature&sensortype=Temperature&aggperiod=none&startdate=',today)
       print(url)
       response <- GET(url)
@@ -282,8 +311,8 @@ shiny::shinyApp(
       RV$TodaysWeather$MinTemp <- min(ts)
       RV$TodaysWeather$MaxTemp <- max(ts)
       
-      today <- str_replace(str_remove(Sys.Date()-hours(10), ' UTC'), ' ', 'T')
-      url <- paste0('http://esoil.io/SensorFederationWebAPI/SensorAPI/getSensorDataStreams?siteid=boorowa_aws_148.6887_-34.4732&sensorid=boorowa.environdata.AWS1.AVERAGE-Relative-Humidity&sensortype=Temperature&aggperiod=none&startdate=',today)
+
+      url <- paste0('http://esoil.io/SensorFederationWebAPI/SensorAPI/getSensorDataStreams?siteid=boorowa_aws_148.6887_-34.4732&sensorid=boorowa.environdata.AWS1.AVERAGE-Relative-Humidity&sensortype=Humidity&aggperiod=none&startdate=',today)
       print(url)
       response <- GET(url)
       stream <- content(response, as="text", encoding	='UTF-8')
@@ -292,34 +321,42 @@ shiny::shinyApp(
       RV$TodaysWeather$MinHumidity <- min(ts)
       RV$TodaysWeather$MaxHumidity <- max(ts)
       
+      url <- paste0('http://esoil.io/SensorFederationWebAPI/SensorAPI/getSensorDataStreams?siteid=boorowa_aws_148.6887_-34.4732&sensorid=boorowa.environdata.AWS1.VWSP-Vector-Wind-Spd&sensortype=Wind-Speed&aggperiod=none&startdate=',today)
+      print(url)
+      response <- GET(url)
+      stream <- content(response, as="text", encoding	='UTF-8')
+      ts <- convertJSONtoTS(stream)
+      RV$TodaysWeather$CurrentWindSpeed <- tail(ts, 1)
+      RV$TodaysWeather$MaxWindSpeed <- max(ts, 1)
+      RV$TodaysWeather$MinWindSpeed <- min(ts, 1)
+      
+      })
+      
     })
     
-    output$todaysCurrentTemperature <- renderText({paste0('Current Temperature : ', RV$TodaysWeather$CurrentTemp) })
-    output$todaysMaxTemperature <- renderText({ paste0('Maximum Temperature : ', RV$TodaysWeather$MaxTemp) })
-    output$todaysMinTemperature <- renderText({ paste0('Minimum Temperature : ', RV$TodaysWeather$MinTemp) })
     
-    output$todaysCurrentHumidity <- renderText({paste0('Current Temperature : ', RV$TodaysWeather$CurrentHumidity) })
-    output$todaysMaxHumidity <- renderText({ paste0('Maximum Temperature : ', RV$TodaysWeather$MaxHumidity) })
-    output$todaysMinHumidity <- renderText({ paste0('Minimum Temperature : ', RV$TodaysWeather$MinHumidity) })
     
-      # today <- str_replace(str_remove(Sys.Date()-hours(10), ' UTC'), ' ', 'T')
-      # url <- paste0('http://esoil.io/SensorFederationWebAPI/SensorAPI/getSensorDataStreams?siteid=boorowa_aws_148.6887_-34.4732&sensorid=boorowa.environdata.AWS1.AVERAGE-Air-Temperature&sensortype=Temperature&aggperiod=none&startdate=',today)
-      # print(url)
-      # response <- GET(url)
-      # stream <- content(response, as="text", encoding	='UTF-8')
-      # ts <- convertJSONtoTS(stream)
-      # 
-      # tail(ts, 1)
-      
+    output$todaysRainfall <- renderText({paste0('Rainfall : ', RV$TodaysWeather$Rainfall, ' mm') })
+    output$todaysMaxRainfall <- renderText({paste0('Maximum Rainfall : ', RV$TodaysWeather$Rainfall, ' mm/hr') })
     
+    
+    output$todaysCurrentTemperature <- renderText({paste0('Current Temperature : ', RV$TodaysWeather$CurrentTemp,  intToUtf8(176), 'C') })
+    output$todaysMaxTemperature <- renderText({ paste0('Maximum Temperature : ', RV$TodaysWeather$MaxTemp,  intToUtf8(176), 'C') })
+    output$todaysMinTemperature <- renderText({ paste0('Minimum Temperature : ', RV$TodaysWeather$MinTemp,  intToUtf8(176), 'C') })
+    
+    output$todaysCurrentHumidity <- renderText({paste0('Current Humidity : ', RV$TodaysWeather$CurrentHumidity, '%') })
+    output$todaysMaxHumidity <- renderText({ paste0('Maximum Humidity : ', RV$TodaysWeather$MaxHumidity, '%') })
+    output$todaysMinHumidity <- renderText({ paste0('Minimum Humidity : ', RV$TodaysWeather$MinHumidity, '%') })
+    
+    output$todaysCurrentWindspeed <- renderText({ paste0('Current Wind Speed : ',  RV$TodaysWeather$CurrentWindSpeed , ' km/hr') })
+    output$todaysMinWindspeed <- renderText({ paste0('Maximum Wind Speed : ',  RV$TodaysWeather$MaxWindSpeed , ' km/hr') })
+    output$todaysMaxWindspeed <- renderText({ paste0('Minimum Wind Speed : ',  RV$TodaysWeather$MinWindSpeed , ' km/hr') })
     
     ################## Render the Chart from a map drill  ##################
     output$WeatherHistoryChart <- renderDygraph({
       
      req(input$WeatherHistoryButtons)
         
-        
-          
           d1 <- as.Date(Sys.Date())
           d2 <- d1-numberofDaysSinceToday
           d3 <- paste0(d2, 'T00:00:00')
@@ -337,19 +374,18 @@ shiny::shinyApp(
           }
           
           
-          
-          print(input$WeatherHistoryButtons)
-          
           url <- paste0('http://esoil.io/SensorFederationWebAPI/SensorAPI/getSensorDataStreams?siteid=boorowa_aws_148.6887_-34.4732&sensorid=', senid,'&sensortype=',input$WeatherHistoryButtons ,'&aggperiod=days&startdate=',d3)
           print(url)
           response <- GET(url)
           stream <- content(response, as="text", encoding	='UTF-8')
           ts <- convertJSONtoTS(stream)
           
+          RV$HistoricalRainfall <- ts
+          
           dygraph(ts ,  main = paste0(''), ylab = '')%>%
             dyOptions(axisLineWidth = 1.5, fillGraph = F, drawGrid = T, titleHeight = 0) %>%
             dyLegend(show = "follow", hideOnMouseOut = T)  %>%
-            dyAxis("y",axisLabelWidth = 10)  %>%
+            dyAxis("y",axisLabelWidth = 15)  %>%
             dyRangeSelector()
           
           
