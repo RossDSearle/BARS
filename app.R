@@ -232,15 +232,18 @@ shiny::shinyApp(
             f7Card(
               title = "Weather History",
               prettyRadioButtons(
-                "WeatherHistoryButtons",
-                "Variable:",
+                
+                inputId = "WeatherHistoryButtons",
+                label = "Variable:",
+                
                 c("Rainfall" = "Rainfall",
                   "Temperature" = "Temperature",
                   "Humidity" = "Humidity",
                   "Windspeed" = "Wind-Speed"),
                 inline = TRUE,
                 status = "success",
-                animation = "pulse"
+                animation = "pulse",
+                bigger = T
               ),
               dygraphOutput("WeatherHistoryChart", height = "300px")
             )
