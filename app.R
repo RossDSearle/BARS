@@ -60,7 +60,8 @@ shiny::shinyApp(
   ui = f7Page(
     title = "BARS",
     init = f7Init(skin = "auto", theme = "light", filled = T, color = 'lightblue'),
-    tags$head(tags$link( rel="icon", type="image/png", href="wheat.png", sizes="32x32" )
+    tags$head(tags$link( rel="icon", type="image/png", href="wheat.png", sizes="32x32" ),
+              tags$link( rel="apple-touch-icon", href="apple-touch-icon.png" )
               #tags$title("BCG AgDataShop"),
               #tags$style(type="text/css", "label.control-label, .selectize-control.single{ display: table-cell; text-align: center; vertical-align: middle; } .form-group { display: table-row;}")
               
