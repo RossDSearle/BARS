@@ -17,6 +17,7 @@ library(shinyalert)
 library(shinyBS)
 library(fields)
 library(lubridate)
+library(shinybusy)
 
 #library(flexdashboard)
 
@@ -62,8 +63,12 @@ shiny::shinyApp(
     
     useShinyjs(),
     
+    #add_busy_bar(color = "#FF0000", centered = FALSE, height = "18px"),
+    #add_busy_spinner(spin = "fading-circle"),
+    add_busy_spinner(spin = "flower", margins = c(0, 0), position='full-page', color = 'blue'),
+    
     #title = NULL,
-    preloader = T,
+    preloader = F,
     loading_duration = loaderTime,
     f7TabLayout(
       panels = tagList(
@@ -477,6 +482,9 @@ shiny::shinyApp(
       click<-input$SoilMoistureProbeMap_marker_click
       if(is.null(click))
         return()
+     
+     # show_modal_spinner()
+      
       
       RV$currentTS <- NULL
       
@@ -680,7 +688,7 @@ shiny::shinyApp(
       crs(p) <- CRS("+init=epsg:4326")
       pal <- colorNumeric(c("brown", "lightgreen",  "darkgreen"), values(p),na.color = "transparent")
       
-      
+      updateF7Progress(session, id = "pg1", value = 0)
       
       proxysm <- leafletProxy("moistureMap2", data = RV$sensorLocs)
       #proxysm %>% clearMarkers()
