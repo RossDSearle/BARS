@@ -65,7 +65,7 @@ shiny::shinyApp(
     
     #add_busy_bar(color = "#FF0000", centered = FALSE, height = "18px"),
     #add_busy_spinner(spin = "fading-circle"),
-    add_busy_spinner(spin = "flower", margins = c(0, 0), position='full-page', color = 'blue'),
+    add_busy_spinner(spin = "flower", margins = c(0, 0), position='full-page', color = 'red',height = "50px", width = "50px"),
     
     #title = NULL,
     preloader = F,
@@ -87,7 +87,7 @@ shiny::shinyApp(
       ),
 
 
-##################################  SOIL MOISTURE PROBE MAP  ##################################         
+##################################  UI - SOIL MOISTURE PROBE MAP  ##################################         
       
       f7Tabs(
         animated = T,
@@ -118,7 +118,7 @@ shiny::shinyApp(
             tags$div( style=paste0("width: ", defWidth),
                       f7Card(
                         title = "Current Soil Water Summary",
-                        
+                        id = 'swgaugecard',
                         f7Gauge(
                           id = "swTotGauge",
                           type  = "semicircle",
@@ -131,22 +131,6 @@ shiny::shinyApp(
                           labelText = "Total Soil Water"
                         )
                         
-                       
-                        #gaugeOutput("gauge", width = "600px", height = "600px"),
-                        
-                        # knobInput(
-                        #   inputId = "prefDaysToExtract",
-                        #   label = "Days since today to display",
-                        #   value = 30,
-                        #   min = 1,
-                        #   max = 365,
-                        #   displayPrevious = TRUE, 
-                        #   lineCap = "round",
-                        #   fgColor = "red",
-                        #   inputColor = "Red",
-                        #   bgColor = "#428BCA",
-                        #   immediate = F
-                        # )
                       ))), side = "left" ),
           
           f7Float(  f7Shadow(
@@ -176,7 +160,7 @@ shiny::shinyApp(
         ),
 
         
-##################################  SOIL MOISTURE MAPS   ##################################           
+################################## UI - SOIL MOISTURE MAPS   ##################################           
         f7Tab(
           tabName = "SM Maps",
           icon = f7Icon("map", old = F ),
@@ -206,7 +190,7 @@ shiny::shinyApp(
         ), side = "left"),
         
         
-##################################  WEATHER   ##################################          
+##################################  UI - WEATHER   ##################################          
         f7Tab(
           tabName = "Weather",
           icon = f7Icon("cloud_heavyrain_fill", old = F),
@@ -267,7 +251,7 @@ shiny::shinyApp(
             )))), side = "left"),
             
             
-##################################  SOIL DATA MAP   ##################################             
+##################################  UI - SOIL DATA MAP   ##################################             
         
         f7Tab(
           tabName = "Soil Data",
@@ -510,6 +494,8 @@ shiny::shinyApp(
       } else {
         proxy %>% acm_defaults(p$lng, p$lat)
       }
+      
+      #updateF7Card(id = "swgaugecard", session = session)
     })
     
     
@@ -581,7 +567,7 @@ shiny::shinyApp(
                                     stroke = FALSE,
                                     fillOpacity = 1,
                                     color = 'blue',
-                                    radius = 5,
+                                    radius = 10,
                                     layerId=paste0(sdf$SiteID),
                                     group = "SW Probes" )
     })
