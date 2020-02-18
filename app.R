@@ -56,6 +56,47 @@ sdVals <- c('0', '1', '2','3','4','4','6','7')
 soilDepthsDF <- data.frame(sdLabels, sdVals, stringsAsFactors = F)
 
 
+today <- str_replace(str_remove(Sys.Date()-hours(10), ' UTC'), ' ', 'T')
+
+url <- paste0('http://esoil.io/SensorFederationWebAPI/SensorAPI/getSensorDataStreams?siteid=boorowa_aws_148.6887_-34.4732&sensorid=boorowa.environdata.AWS1.TOTAL-Rain-Gauge&sensortype=Rainfall&aggperiod=hours&startdate=',today)
+print(url)
+response <- GET(url)
+stream <- content(response, as="text", encoding	='UTF-8')
+ts <- convertJSONtoTS(stream)
+TodaysWeather=NULL
+TodaysWeather$Rainfall <- sum(ts)
+TodaysWeather$MaxRainfall <- max(ts)
+
+url <- paste0('http://esoil.io/SensorFederationWebAPI/SensorAPI/getSensorDataStreams?siteid=boorowa_aws_148.6887_-34.4732&sensorid=boorowa.environdata.AWS1.AVERAGE-Air-Temperature&sensortype=Temperature&aggperiod=none&startdate=',today)
+print(url)
+response <- GET(url)
+stream <- content(response, as="text", encoding	='UTF-8')
+ts <- convertJSONtoTS(stream)
+TodaysWeather$CurrentTemp <- tail(ts, 1)
+TodaysWeather$MinTemp <- min(ts)
+TodaysWeather$MaxTemp <- max(ts)
+
+
+url <- paste0('http://esoil.io/SensorFederationWebAPI/SensorAPI/getSensorDataStreams?siteid=boorowa_aws_148.6887_-34.4732&sensorid=boorowa.environdata.AWS1.AVERAGE-Relative-Humidity&sensortype=Humidity&aggperiod=none&startdate=',today)
+print(url)
+response <- GET(url)
+stream <- content(response, as="text", encoding	='UTF-8')
+ts <- convertJSONtoTS(stream)
+TodaysWeather$CurrentHumidity <- tail(ts, 1)
+TodaysWeather$MinHumidity <- min(ts)
+TodaysWeather$MaxHumidity <- max(ts)
+
+url <- paste0('http://esoil.io/SensorFederationWebAPI/SensorAPI/getSensorDataStreams?siteid=boorowa_aws_148.6887_-34.4732&sensorid=boorowa.environdata.AWS1.VWSP-Vector-Wind-Spd&sensortype=Wind-Speed&aggperiod=none&startdate=',today)
+print(url)
+response <- GET(url)
+stream <- content(response, as="text", encoding	='UTF-8')
+ts <- convertJSONtoTS(stream)
+TodaysWeather$CurrentWindSpeed <- tail(ts, 1)
+TodaysWeather$MaxWindSpeed <- max(ts, 1)
+TodaysWeather$MinWindSpeed <- min(ts, 1)
+
+
+
 shiny::shinyApp(
   ui = f7Page(
     title = "BARS",
@@ -319,51 +360,52 @@ shiny::shinyApp(
     ##################################  SERVER - WEATHER   ##################################      
     observe(  {
       
-      req(RV$HistoricalRainfall)
+     # req(RV$HistoricalRainfall)
       
-      isolate({
-      today <- str_replace(str_remove(Sys.Date()-hours(10), ' UTC'), ' ', 'T')
+     # isolate({
       
-      url <- paste0('http://esoil.io/SensorFederationWebAPI/SensorAPI/getSensorDataStreams?siteid=boorowa_aws_148.6887_-34.4732&sensorid=boorowa.environdata.AWS1.TOTAL-Rain-Gauge&sensortype=Rainfall&aggperiod=hours&startdate=',today)
-      print(url)
-      response <- GET(url)
-      stream <- content(response, as="text", encoding	='UTF-8')
-      ts <- convertJSONtoTS(stream)
-      RV$TodaysWeather$Rainfall <- sum(ts)
-      RV$TodaysWeather$MaxRainfall <- max(ts)
-      # RV$TodaysWeather$MaxTemp <- max(ts)
-      print(ts)
+        
+        # today <- str_replace(str_remove(Sys.Date()-hours(10), ' UTC'), ' ', 'T')
+      # 
+      # url <- paste0('http://esoil.io/SensorFederationWebAPI/SensorAPI/getSensorDataStreams?siteid=boorowa_aws_148.6887_-34.4732&sensorid=boorowa.environdata.AWS1.TOTAL-Rain-Gauge&sensortype=Rainfall&aggperiod=hours&startdate=',today)
+      # print(url)
+      # response <- GET(url)
+      # stream <- content(response, as="text", encoding	='UTF-8')
+      # ts <- convertJSONtoTS(stream)
+      RV$TodaysWeather$Rainfall <- TodaysWeather$Rainfall
+      RV$TodaysWeather$MaxRainfall <- TodaysWeather$MaxRainfall
+      # print(ts)
+      # 
+      # 
+      # url <- paste0('http://esoil.io/SensorFederationWebAPI/SensorAPI/getSensorDataStreams?siteid=boorowa_aws_148.6887_-34.4732&sensorid=boorowa.environdata.AWS1.AVERAGE-Air-Temperature&sensortype=Temperature&aggperiod=none&startdate=',today)
+      # print(url)
+      # response <- GET(url)
+      # stream <- content(response, as="text", encoding	='UTF-8')
+      # ts <- convertJSONtoTS(stream)
+       RV$TodaysWeather$CurrentTemp <- TodaysWeather$CurrentTemp
+       RV$TodaysWeather$MinTemp <- TodaysWeather$MinTemp
+       RV$TodaysWeather$MaxTemp <- TodaysWeather$MaxTemp
+      # 
+      # 
+      # url <- paste0('http://esoil.io/SensorFederationWebAPI/SensorAPI/getSensorDataStreams?siteid=boorowa_aws_148.6887_-34.4732&sensorid=boorowa.environdata.AWS1.AVERAGE-Relative-Humidity&sensortype=Humidity&aggperiod=none&startdate=',today)
+      # print(url)
+      # response <- GET(url)
+      # stream <- content(response, as="text", encoding	='UTF-8')
+      # ts <- convertJSONtoTS(stream)
+       RV$TodaysWeather$CurrentHumidity <- TodaysWeather$CurrentHumidity
+       RV$TodaysWeather$MinHumidity <- TodaysWeather$MinHumidity
+       RV$TodaysWeather$MaxHumidity <- TodaysWeather$MaxHumidity
+      # 
+      # url <- paste0('http://esoil.io/SensorFederationWebAPI/SensorAPI/getSensorDataStreams?siteid=boorowa_aws_148.6887_-34.4732&sensorid=boorowa.environdata.AWS1.VWSP-Vector-Wind-Spd&sensortype=Wind-Speed&aggperiod=none&startdate=',today)
+      # print(url)
+      # response <- GET(url)
+      # stream <- content(response, as="text", encoding	='UTF-8')
+      # ts <- convertJSONtoTS(stream)
+       RV$TodaysWeather$CurrentWindSpeed <- TodaysWeather$CurrentWindSpeed
+       RV$TodaysWeather$MaxWindSpeed <- TodaysWeather$MaxWindSpeed
+       RV$TodaysWeather$MinWindSpeed <- TodaysWeather$MinWindSpeed
       
-      
-      url <- paste0('http://esoil.io/SensorFederationWebAPI/SensorAPI/getSensorDataStreams?siteid=boorowa_aws_148.6887_-34.4732&sensorid=boorowa.environdata.AWS1.AVERAGE-Air-Temperature&sensortype=Temperature&aggperiod=none&startdate=',today)
-      print(url)
-      response <- GET(url)
-      stream <- content(response, as="text", encoding	='UTF-8')
-      ts <- convertJSONtoTS(stream)
-      RV$TodaysWeather$CurrentTemp <- tail(ts, 1)
-      RV$TodaysWeather$MinTemp <- min(ts)
-      RV$TodaysWeather$MaxTemp <- max(ts)
-      
-
-      url <- paste0('http://esoil.io/SensorFederationWebAPI/SensorAPI/getSensorDataStreams?siteid=boorowa_aws_148.6887_-34.4732&sensorid=boorowa.environdata.AWS1.AVERAGE-Relative-Humidity&sensortype=Humidity&aggperiod=none&startdate=',today)
-      print(url)
-      response <- GET(url)
-      stream <- content(response, as="text", encoding	='UTF-8')
-      ts <- convertJSONtoTS(stream)
-      RV$TodaysWeather$CurrentHumidity <- tail(ts, 1)
-      RV$TodaysWeather$MinHumidity <- min(ts)
-      RV$TodaysWeather$MaxHumidity <- max(ts)
-      
-      url <- paste0('http://esoil.io/SensorFederationWebAPI/SensorAPI/getSensorDataStreams?siteid=boorowa_aws_148.6887_-34.4732&sensorid=boorowa.environdata.AWS1.VWSP-Vector-Wind-Spd&sensortype=Wind-Speed&aggperiod=none&startdate=',today)
-      print(url)
-      response <- GET(url)
-      stream <- content(response, as="text", encoding	='UTF-8')
-      ts <- convertJSONtoTS(stream)
-      RV$TodaysWeather$CurrentWindSpeed <- tail(ts, 1)
-      RV$TodaysWeather$MaxWindSpeed <- max(ts, 1)
-      RV$TodaysWeather$MinWindSpeed <- min(ts, 1)
-      
-      })
+     # })
       
     })
     
