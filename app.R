@@ -60,6 +60,11 @@ shiny::shinyApp(
   ui = f7Page(
     title = "BARS",
     init = f7Init(skin = "auto", theme = "light", filled = T, color = 'lightblue'),
+    tags$head(tags$link( rel="icon", type="image/png", href="wheat.png", sizes="32x32" )
+              #tags$title("BCG AgDataShop"),
+              #tags$style(type="text/css", "label.control-label, .selectize-control.single{ display: table-cell; text-align: center; vertical-align: middle; } .form-group { display: table-row;}")
+              
+              ),
     
     useShinyjs(),
     
@@ -101,7 +106,7 @@ shiny::shinyApp(
             hover = TRUE,
             tags$div( style=paste0("width: ", defWidth),
                       f7Card(
-                        title = "Click on a probe location to display info below",
+                        title = "Click on a probe location to display info below. Scroll down to view results.",
                         
                        # f7Select(inputId = 'SMDepth', label = "Select Soil Moisture Depth (cm)", c(30, 40, 50,60,70,80,90,100)),
                        # HTML('<BR>'),
