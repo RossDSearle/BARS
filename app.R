@@ -112,14 +112,23 @@ shiny::shinyApp(
     
     #add_busy_bar(color = "#FF0000", centered = FALSE, height = "18px"),
     #add_busy_spinner(spin = "fading-circle"),
-    add_busy_spinner(spin = "flower", margins = c(0, 0), position='full-page', color = 'red',height = "50px", width = "50px"),
+    add_busy_spinner(spin = "flower", margins = c(0, 0), position='full-page', color = 'red',height = "80px", width = "80px"),
     
     #title = NULL,
     preloader = F,
     loading_duration = loaderTime,
     f7TabLayout(
       panels = tagList(
-        f7Panel(title = "Left Panel", side = "left", theme = "light", "Blabla", effect = "cover")
+        f7Panel(title = "About", side = "left", theme = "dark", effect = "cover",
+                
+                f7Link(label = "About BARS", src = "https://www.csiro.au/en/Research/AF/Areas/Boorowa-Agricultural-Research-Station", external = TRUE),
+                f7Link(label = "About CSIRO Ag & Food", src = "https://www.csiro.au/en/Research/AF", external = TRUE),
+                f7Link(label = "About CSIRO", src = "https://www.csiro.au", external = TRUE),
+                f7Link(label = "BoM Boowora", src = "http://www.bom.gov.au/places/nsw/boorowa/", external = TRUE)
+                
+                
+                
+                )
         #f7Panel(title = "Right Panel", side = "right", theme = "dark", "Blabla", effect = "cover")
       ),
  
@@ -330,6 +339,8 @@ shiny::shinyApp(
 
 ##################################  SERVER  ##################################   
   server = function(input, output, session) {
+    
+    session$allowReconnect(TRUE)
     
     RV <- reactiveValues()
     RV$currentTS <- NULL
